@@ -1,4 +1,3 @@
-import scrapers_call
 from langchain_ollama import ChatOllama
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import SystemMessage, HumanMessage

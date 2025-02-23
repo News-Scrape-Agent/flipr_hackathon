@@ -1,4 +1,3 @@
-# TODO: Write code to scrape the content of articles too
 import asyncio
 from playwright.async_api import async_playwright
 

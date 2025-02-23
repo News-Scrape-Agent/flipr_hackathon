@@ -1,5 +1,6 @@
 import logging
-import generate_blog
+from scrapers_call import get_news
+from generate_blog import generate_news_blog
 import chainlit as cl
 from tools_config import tools
 from langchain_ollama import ChatOllama
@@ -39,8 +40,10 @@ def process_query(query: str) -> str:
             if function_name == "get_conversational_response":
                 return args['response']
             elif function_name == 'analyze_news_query':
-                # return generate_blog(**args)
-                return "News analysis complete."
+                headlines, contents = get_news(**args)
+                blogs = []
+                for headline, content in zip(headlines, contents):
+                    blogs.append(generate_news_blog(headline, content))
 
     return result.content
 

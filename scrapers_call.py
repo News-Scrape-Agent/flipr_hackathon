@@ -1,10 +1,79 @@
 """
 This script is used to call the scrapers for the different websites as per LLMs Response of User's Query.
-Features:
-1) If Latest News is True and Topic is Empty then it will run all the scrapers and will fetch atmost 2 news from each category.
-2) If Topic is not Empty then it will run the scrapers for the given topic and will fetch news as per no. of topics.
-3) If Location is not Empty then it will run only selected scrapers and will collect news of that place.
-4) This script will return the news in the form of a list of dictionaries or a Dataframe. 
-5) Data from this script will go for Blog Generation.
-6) By default the language of the news is English and location will be Delhi (if possible).
 """
+import os
+import importlib
+import pandas as pd
+from pathlib import Path
+
+def load_scrapers(folder_path):
+    scrapers = []
+    folder = Path(folder_path)
+    
+    if folder.exists():
+        for file in folder.glob("*.py"):
+            module_name = f"{folder.name}.{file.stem}"  # Convert path to module name
+            module = importlib.import_module(module_name)  # Import dynamically
+            if hasattr(module, "run_scraper"):
+                scrapers.append(module.run_scraper)  # Add function reference
+                
+    return scrapers
+
+# Load all scrapers from respective folders
+topic_news_scrapers = load_scrapers("scrapers/topic_news_scrapers")
+latest_news_scrapers = load_scrapers("scrapers/latest_news_scrapers")
+location_news_scrapers = load_scrapers("scrapers/location_news_scrapers")
+
+# Function to run selected scrapers based on user query
+def run_selected_scrapers(query):
+    results = []
+
+    if query['topic']:
+        for scraper in topic_news_scrapers:
+            results.extend(scraper(query))
+
+    if "latest_news" in query:
+        for scraper in latest_news_scrapers:
+            results.extend(scraper(query))
+
+    if "location" in query:
+        for scraper in location_news_scrapers:
+            results.extend(scraper(query))
+    
+    return results
+
+# Function to apply post-processing
+# TODO: Implement case for all 3 in query and also using csv file check if city or state is present in the content
+def post_process_results(data, query):
+    df = pd.read_csv('indian_cities_and_states.csv')
+
+    if query['topic'] and "location" in query:
+        data = [item for item in data if query["location"].lower() in item["content"].lower()]
+    
+    if query['topic'] and query['latest_news']:
+        data = [item for item in data if query["topic"].lower() in item["content"].lower()]
+    
+    return data
+
+# Main function to handle the pipeline
+def scrape_and_process(query):
+    raw_data = run_selected_scrapers(query)
+    processed_data = post_process_results(raw_data, query)
+    return processed_data
+
+def get_news(args):
+    """
+    Get the news based on the arguments provided.
+    
+    Arguments:
+    - args: Dictionary containing the topic, location, latest or not.
+    
+    Returns:
+    - news: A list of news articles.
+    """
+    latest_news = args.get('latest_news', False)
+    topics = args.get('topics', [])
+    locations = args.get('locations', 'delhi')
+    query = {"latest_news" : latest_news, "topics" : topics, "locations" : locations}
+    news = scrape_and_process(query)
+    return news
