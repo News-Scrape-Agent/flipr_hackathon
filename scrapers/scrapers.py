@@ -70,7 +70,11 @@ def india_tv_news_scraper(url: str):
                         link_soup = BeautifulSoup(link_response.text, "html.parser")
                         headline = link_soup.find("h1", class_="arttitle")
                         title = headline.text
-                        date_time = link_soup.find("time")["datetime"]
+                        date_time = link_soup.find("time")
+                        if date_time:
+                            date_time = date_time["datetime"]
+                        else:
+                            date_time = None
                         content_div = link_soup.find("div", class_="content", id = "content")
                         full_content = None
                         if content_div:

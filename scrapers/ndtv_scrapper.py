@@ -21,8 +21,8 @@ def ndtv_scrapper(url):
                 news.append({"title": heading, "date_time": time, "label": label, "content": content})
             except:
                 continue
-        return news
         browser.close()
+        return news
 url = "https://www.ndtv.com/india"
 news = ndtv_scrapper(url)
 print("Scraping complete. Total articles:", len(news))
