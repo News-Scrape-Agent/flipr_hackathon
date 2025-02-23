@@ -1,8 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
 
-def ndtv_cities_scraper(url):
-    news = []
+url = "https://www.ndtv.com/"
+def ndtv_cities_scraper(url: str, max_articles: int = 10):
+    
     response = requests.get(url, timeout=60)
     if response.status_code != 200:
         print("Failed to load main page")
@@ -16,7 +17,7 @@ def ndtv_cities_scraper(url):
     other_cities = [a.get("href") for a in other_elements if a.get("href")]
     
     cities_links = metros + other_cities
-
+    news = []
     for city_link in cities_links:
         try:
             city_resp = requests.get(city_link, timeout=60)
@@ -27,7 +28,7 @@ def ndtv_cities_scraper(url):
             news_links_elements = city_soup.select(".NwsLstPg_ttl-lnk")
             
             links = list({a.get("href") for a in news_links_elements if a.get("href")})
-            links = links[:1]
+            links = links[:min(max_articles, len(links))]
             if links:
                 article_link = links[0]
                 try:
@@ -48,13 +49,7 @@ def ndtv_cities_scraper(url):
                     paragraphs = article_soup.select("div.Art-exp_cn p")
                     content = " ".join(p.get_text(strip=True) for p in paragraphs)
                     
-                    news.append({
-                        "title": heading,
-                        "date_time": time_text,
-                        "label": label,
-                        "location": label[:-5],
-                        "content": content
-                    })
+                    news.append({"title": heading, "date_time": time_text, "content": content, "label": label, "location": label[:-5]})
                 except Exception as e:
                     # If any error occurs while scraping the article, skip it.
                     continue
@@ -62,10 +57,3 @@ def ndtv_cities_scraper(url):
             continue
     
     return news
-
-if __name__ == "__main__":
-    url = "https://www.ndtv.com/"
-    articles = ndtv_cities_scraper(url)
-    print("\nScraped News Articles:")
-    for article in articles:
-        print(article)

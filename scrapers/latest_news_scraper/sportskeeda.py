@@ -3,32 +3,38 @@ import asyncio
 from playwright.async_api import async_playwright
 from bs4 import BeautifulSoup
 
-url = 'https://www.sportskeeda.com/'
-response = requests.get(url)
+def sportskeeda_link_scraper(url: str, num_links: int = 10):
+    response = requests.get(url)
 
-# Parse the HTML content of the webpage
-soup = BeautifulSoup(response.text, "html.parser")
+    # Parse the HTML content of the webpage
+    soup = BeautifulSoup(response.text, "html.parser")
 
-# Find all divs whose class starts with "category-region"
-target_classes = ["feed-featured-content-primary", "feed-featured-content-secondary"]
-featured_divs = soup.find_all("div", class_=lambda x: x in target_classes if x else False)
+    # Find all divs whose class starts with "category-region"
+    target_classes = ["feed-featured-content-primary", "feed-featured-content-secondary"]
+    featured_divs = soup.find_all("div", class_=lambda x: x in target_classes if x else False)
 
-# Extract only <a> href links inside these divs
-links = []
-for div in featured_divs:
-    for a_tag in div.find_all("a", href=True):
-        full_link = requests.compat.urljoin(url, a_tag["href"])  # Convert relative to absolute URL
-        links.append(full_link)
+    # Extract only <a> href links inside these divs
+    links = []
+    for div in featured_divs:
+        for a_tag in div.find_all("a", href=True):
+            full_link = requests.compat.urljoin(url, a_tag["href"])  # Convert relative to absolute URL
+            links.append(full_link)
+
+    links = links[:min(num_links, len(links))]
+    return links
 
 
-# url = "https://www.sportskeeda.com/cricket/news-he-focuses-keeping-icc-ranking-intact-danish-kaneria-pakistan-spinner-lashes-babar-azam-ahead-ind-vs-pak-2025-champions-trophy-clash"
+async def sportskeeda_scraper():
 
-async def main():
+    url = 'https://www.sportskeeda.com/'
+    links = sportskeeda_link_scraper(url)
+
     async with async_playwright() as p:
         # Launch the browser
         browser = await p.chromium.launch(headless=True)  # Run in headless mode for faster execution
         page = await browser.new_page()
-        all_content = []
+
+        news = []
         for url in links:
             # Go to the webpage
             await page.goto(url)
@@ -49,13 +55,14 @@ async def main():
                 if p_text:
                     article_content.append(p_text.strip())
 
-            all_content.append((article_content, heading, time_text))
+            article_content = "\n".join(article_content)
+
+            news.append({"title": heading, "date_time": time_text, "content": article_content})
 
         # Close the browser
         await browser.close()
 
-    # Print or return extracted text
-    return all_content
+    return news
 
 # Run the Playwright script
-asyncio.run(main())
+asyncio.run(sportskeeda_scraper())

@@ -1,8 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 
-
-def india_tv_news_cities_scraper(url: str):
+url = "https://www.indiatvnews.com/"
+def india_tv_news_cities_scraper(url: str, max_articles: int = 10):
     response = requests.get(url)
 
     if response.status_code == 200:
@@ -18,8 +18,9 @@ def india_tv_news_cities_scraper(url: str):
                     state_soup = BeautifulSoup(state_response.text, "html.parser")
                     news_ul = state_soup.find_all("ul", class_="news-list")
                     news_links = [a["href"] for news_div in news_ul for a in news_div.find_all("a", href=True)]
+                    
                     news_links = list(set(news_links))
-                    news_links = news_links[:10]
+                    news_links = news_links[:min(max_articles, len(news_links))]
                     for news_link in news_links:
                         if(len(news_link.split('/')) !=5):
                             continue
@@ -39,7 +40,7 @@ def india_tv_news_cities_scraper(url: str):
                                 if content_div:
                                     paragraphs = content_div.find_all("p")
                                     full_content = "\n".join(p.get_text(strip=True) for p in paragraphs)
-                                news.append({"title": title, "date_time": date_time, "state": state_link.split('/')[-1], "content": full_content})
+                                news.append({"title": title, "date_time": date_time, "content": full_content, "state": state_link.split('/')[-1]})
                             else:
                                 print(f"Failed to retrieve page, status code: {response.status_code}")
                                 continue
@@ -56,7 +57,4 @@ def india_tv_news_cities_scraper(url: str):
     else:
         print(f"Failed to retrieve page, status code: {response.status_code}")
 
-
-url = "https://www.indiatvnews.com/"
-news = india_tv_news_cities_scraper(url)
-print(news)
+    return news

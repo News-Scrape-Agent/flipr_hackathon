@@ -1,8 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 
-
-def indian_express_scraper(url: str,num_pages: int,num_articles: int):    
+url = "https://indianexpress.com/latest-news/"
+def indian_express_scraper(url: str, num_pages: int = 3, num_articles: int = 5):    
     response = requests.get(url)
 
     if response.status_code == 200:
@@ -12,8 +12,9 @@ def indian_express_scraper(url: str,num_pages: int,num_articles: int):
         page_class_name = "page-numbers"
         target_div = soup.find("div", class_=div_class_name)
         total_pages = soup.find_all("a", class_=page_class_name)[1].text
+
         links = []
-        for i in range(1,min(num_pages,int(total_pages)+1)):
+        for i in range(1, min(num_pages, int(total_pages) + 1)):
             try:
                 page_response = requests.get(url + "page/" + str(i) + "/", timeout=6)
                 if page_response.status_code == 200:
@@ -25,9 +26,11 @@ def indian_express_scraper(url: str,num_pages: int,num_articles: int):
                     print(f"Failed to retrieve page, status code: {response.status_code}")
             except requests.exceptions.Timeout:
                 print(f"Timeout error for page {i}")
+
         links = set(links)
         filtered_links = [link for link in links if not link.startswith("https://indianexpress.com/latest-news/page/")]
-        filtered_links = filtered_links[:min(num_articles,len(filtered_links))]
+
+        filtered_links = filtered_links[:min(num_articles, len(filtered_links))]
         for link in filtered_links:
             try:
                 link_response = requests.get(link, timeout=6)
@@ -49,9 +52,3 @@ def indian_express_scraper(url: str,num_pages: int,num_articles: int):
         return news
     else:
         print(f"Failed to retrieve page, status code: {response.status_code}")
-
-url = "https://indianexpress.com/latest-news/"
-num_pages = 3
-num_articles = 5
-news = indian_express_scraper(url, num_pages, num_articles)
-print(news)

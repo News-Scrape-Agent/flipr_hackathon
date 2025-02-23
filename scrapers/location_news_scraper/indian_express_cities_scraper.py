@@ -1,7 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 
-def indian_express_cities_scraper(url: str):    
+url = "https://indianexpress.com/section/cities/"
+def indian_express_cities_scraper(url: str, max_articles: int = 10):    
     response = requests.get(url)
 
     if response.status_code == 200:
@@ -17,8 +18,9 @@ def indian_express_cities_scraper(url: str):
                     city_soup = BeautifulSoup(city_response.text, "html.parser")
                     new_div = city_soup.find("div", id="north-east-data")
                     news_link = [a["href"] for a in new_div.find_all("a", href=True)]
+
                     news_link = list(set(news_link))
-                    news_link = news_link[:10]
+                    news_link = news_link[:min(max_articles, len(news_link))]
                     for link in news_link:
                         try:
                             link_response = requests.get(link, timeout=6)
@@ -32,7 +34,7 @@ def indian_express_cities_scraper(url: str):
                                 if content_div:
                                     paragraphs = content_div.find_all("p")
                                     full_content = "\n".join(p.get_text(strip=True) for p in paragraphs)
-                                news.append({"title": title, "date_time": date_time, "city": city_url.split('/')[-2], "content": full_content})
+                                news.append({"title": title, "date_time": date_time, "content": full_content, "city": city_url.split('/')[-2]})
                             else:
                                 print(f"Failed to retrieve page, status code: {response.status_code}")
                                 continue
@@ -50,8 +52,5 @@ def indian_express_cities_scraper(url: str):
     else:
         print(f"Failed to retrieve page, status code: {response.status_code}")
         
-
-url = "https://indianexpress.com/section/cities/"
-news = indian_express_cities_scraper(url)
-print(news)
+    return news
 

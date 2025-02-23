@@ -1,8 +1,8 @@
-# TODO: Limit the number of articles to be scraped
 import requests
 from bs4 import BeautifulSoup
 
-def india_tv_news_scraper(url: str):    
+url = "https://www.indiatvnews.com/latest-news"
+def india_tv_news_scraper(url: str, max_articles: int = 10):    
     response = requests.get(url)
 
     if response.status_code == 200:
@@ -15,6 +15,8 @@ def india_tv_news_scraper(url: str):
             label = None
             if label_h2:
                 label = label_h2.get_text(strip=True)
+
+            links = links[:min(max_articles, len(links))]
             for link in links:
                 try:
                     link_response = requests.get(link, timeout=6)
@@ -32,7 +34,7 @@ def india_tv_news_scraper(url: str):
                         if content_div:
                             paragraphs = content_div.find_all("p")
                             full_content = "\n".join(p.get_text(strip=True) for p in paragraphs)
-                        news.append({"title": title, "date_time": date_time, "label":label,"content": full_content})
+                        news.append({"title": title, "date_time": date_time, "content": full_content, "label":label})
                     else:
                         print(f"Failed to retrieve page, status code: {response.status_code}")
                 except requests.exceptions.Timeout:
@@ -41,7 +43,3 @@ def india_tv_news_scraper(url: str):
         return news
     else:
         print(f"Failed to retrieve page, status code: {response.status_code}")
-
-url = "https://www.indiatvnews.com/latest-news"
-news_list = india_tv_news_scraper(url)
-print(news_list)
