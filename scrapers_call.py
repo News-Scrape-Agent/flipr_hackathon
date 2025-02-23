@@ -6,4 +6,5 @@ Features:
 3) If Location is not Empty then it will run only selected scrapers and will collect news of that place.
 4) This script will return the news in the form of a list of dictionaries or a Dataframe. 
 5) Data from this script will go for Blog Generation.
+6) By default the language of the news is English and location will be Delhi (if possible).
 """

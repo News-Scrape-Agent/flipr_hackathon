@@ -1,23 +1,5 @@
 tools = [
     {
-        "name": "get_current_weather",
-        "description": "Get the current weather in a given location",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "location": {
-                    "type": "string",
-                    "description": "The city and state, e.g. San Francisco, CA",
-                },
-                "unit": {
-                    "type": "string",
-                    "enum": ["celsius", "fahrenheit"],
-                },
-            },
-            "required": ["location"],
-        },
-    },
-    {
         "name": "get_conversational_response",
         "description": "Respond conversationally if no other tools should be called for a given query.",
         "parameters": {
@@ -44,15 +26,23 @@ tools = [
                 "topic": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "string",
                     },
-                    "enum": ["Politics", "Sports", "Crime", "Science and Technology", "Business", "Entertainment", "Health", "Environment", "Education", "Global News", "Local News", "Lifestyle and Culture"],
+                    "enum": [
+                        "elections and politics", "sports", "crime and war", "science and technology", "astrology", 
+                        "business", "entertainment", "health and medicine", "environment", 
+                        "education", "global news", "local news", "lifestyle and culture", "jobs"
+                    ],
                     "description": "The specific news topic the user is interested in, if applicable."
                 },
                 "location": {
                     "type": "string",
                     "description": "The location for which the user wants news, if applicable."
-                }
+                },
+                "language": {
+                    "type": "string",
+                    "description": "The language in which the user wants news, if applicable."
+                },
             },
             "required": ["latest_news", "topic"]
         }

@@ -10,8 +10,8 @@ from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Initialize the AI model
-model1 = ChatOllama(model="llama3.2:3b", format="json", temperature=0.3, num_ctx=1024)
-model1 = model1.bind_tools(tools=tools)
+model = ChatOllama(model="llama3.2:3b", format="json", temperature=0.3, num_ctx=1024)
+model = model.bind_tools(tools=tools)
 
 # Create the prompt template for the AI model
 prompt = ChatPromptTemplate.from_messages([
@@ -27,7 +27,7 @@ def process_query(query: str) -> str:
     logging.info(f"Processing query: {query}")
     formatted_prompt = prompt.format_messages(input=query)
     logging.info(f"Formatted prompt: {formatted_prompt}")
-    result = model1.invoke(formatted_prompt)
+    result = model.invoke(formatted_prompt)
     logging.info(result)
     
     if result.tool_calls:
