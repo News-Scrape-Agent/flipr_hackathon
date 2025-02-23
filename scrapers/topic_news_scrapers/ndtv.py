@@ -43,16 +43,3 @@ async def ndtv_topic_scraper(url: str, topics: list, max_articles: int = 10):
         await browser.close()
 
         return news
-
-# Example usage
-async def main():
-    topics = ["Alia Bhatt", "Tech News"]
-    news_data = await ndtv_topic_scraper(url, topics)
-
-    # Print results
-    for article in news_data:
-        print(f"📰 {article['title']} ({article['date_time']}) - {article['label']}")
-        print(f"Content: {article['content'][:300]}...")  # Show first 300 chars of content
-
-# Run the async function
-asyncio.run(main())
