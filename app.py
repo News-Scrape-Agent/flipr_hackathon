@@ -21,6 +21,7 @@ prompt = ChatPromptTemplate.from_messages([
 ])
 
 # Function to process user queries
+# TODO: Add another code to translate into other language
 def process_query(query: str) -> str:
     """
     Processes user queries by invoking the AI model and calling appropriate functions.
