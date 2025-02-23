@@ -2,8 +2,12 @@ import requests
 from bs4 import BeautifulSoup
 
 url = "https://indianexpress.com/section/cities/"
-def indian_express_cities_scraper(url: str, max_articles: int = 10):    
-    response = requests.get(url)
+def indian_express_cities_scraper(url: str, max_articles: int = 10):  
+    try:  
+        response = requests.get(url)
+    except Exception as e:
+        print(f"Error getting the response from {url}: {e}")
+        return []
 
     if response.status_code == 200:
         news = []
@@ -47,10 +51,9 @@ def indian_express_cities_scraper(url: str, max_articles: int = 10):
             except requests.exceptions.Timeout:
                 print(f"Timeout error for {city_url}")
                 continue
-        return news
     
     else:
         print(f"Failed to retrieve page, status code: {response.status_code}")
         
+    print("Scraping complete. Total articles:", len(news))
     return news
-
