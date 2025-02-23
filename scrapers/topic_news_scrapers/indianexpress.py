@@ -1,56 +1,59 @@
-from playwright.sync_api import sync_playwright
+import requests
+from bs4 import BeautifulSoup
+from playwright.async_api import async_playwright
 
-class IndianExpressScraper:
-    def __init__(self, headless=True):
-        """Initialize Playwright with optional headless mode."""
-        self.headless = headless
+url = "https://indianexpress.com/search/"
+async def indian_express_topic_scraper(url: str = url, topics: list = [], max_articles: int = 10) -> list:
+    news = []
 
-    def scrape_links(self, topics):
-        """
-        Searches for multiple topics on Indian Express and extracts news article links.
-        
-        :param topics: List of topics to search.
-        :return: Dictionary where each topic maps to a list of article links.
-        """
-        results = {}
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=False)
+        page = await browser.new_page()
 
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=self.headless)
-            page = browser.new_page()
+        for topic in topics:
+            print(f"🔍 Searching for: {topic}")
+            await page.goto(url, timeout=60000)
 
-            for topic in topics:
-                print(f"🔍 Searching for: {topic}")
-                page.goto("https://indianexpress.com/search/", timeout=60000)
+            # Fill the search input field
+            await page.fill(".srch-npt", topic)
 
-                # Fill the search input field
-                page.fill(".srch-npt", topic)
+            # Click the search button
+            await page.click(".srch-btn")
 
-                # Click the search button
-                page.click(".srch-btn")
+            # Wait for search results
+            await page.wait_for_selector("#search-listing-results .search-result")
 
-                # Wait for search results
-                page.wait_for_selector("#search-listing-results .search-result")
+            # Extract valid news article links
+            links = await page.eval_on_selector_all(
+                "#search-listing-results .search-result h3 a",
+                "elements => elements.map(el => el.href)"
+            )
 
-                # Extract valid news article links
-                links = page.eval_on_selector_all(
-                    "#search-listing-results .search-result h3 a",
-                    "elements => elements.map(el => el.href)"
-                )
+            # print(f"Found {len(links)} links for '{topic}'")
+            links = links[:min(max_articles, len(links))]
+            for link in links:
+                try:
+                    link_response = requests.get(link, timeout=6)
+                    if link_response.status_code == 200:
+                        link_soup = BeautifulSoup(link_response.text, "html.parser")
+                        headline = link_soup.find("h1", itemprop="headline")
 
-                results[topic] = links
-                print(f"Found {len(links)} links for '{topic}'")
+                        title = headline.text
+                        date_time = link_soup.find("span", itemprop="dateModified")["content"]
+                        content_div = link_soup.find("div", id="pcl-full-content")
+                        full_content = None
+                        if content_div:
+                            paragraphs = content_div.find_all("p")
+                            full_content = "\n".join(p.get_text(strip=True) for p in paragraphs)
+                            
+                        news.append({"title": title, "date_time": date_time, "content": full_content, "topic": topic})
+                    else:
+                        print(f"Failed to retrieve page, status code: {link_response.status_code}")
+                        continue
+                except requests.exceptions.Timeout:
+                    print(f"Timeout error for {link}")
+                    continue
 
-            browser.close()
+        await browser.close()
 
-        return results
-
-# Example Usage
-topics_to_search = ["JEE Mains", "NEET 2025"]
-scraper = IndianExpressScraper(headless=True)  # Set headless=True to run in background
-news_links = scraper.scrape_links(topics_to_search)
-
-# Print results
-for topic, links in news_links.items():
-    print(f"{topic}:")
-    for link in links:
-        print(f" - {link}")
+    return news

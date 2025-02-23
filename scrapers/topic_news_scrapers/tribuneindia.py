@@ -1,31 +1,45 @@
 import asyncio
 from playwright.async_api import async_playwright
 
-async def scrape_links():
+url = "https://www.tribuneindia.com/topic"
+async def tribune_topic_scraper(url: str, topics: list, max_articles: int = 10):
+
     async with async_playwright() as p:
-        # Launch a browser instance (headless=True for background execution)
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
-        
-        # Open the target URL
-        url = "https://www.tribuneindia.com/topic/ai"
-        await page.goto(url, timeout=60000)  # 60 sec timeout
 
-        # Wait for elements to load
-        await page.wait_for_selector("div.post-item.search_post", timeout=10000)
+        links = []
+        for topic in topics:
+            topic = topic.lower().replace(" ", "-")
+            await page.goto(f"{url}/{topic}/", timeout=60000)  # 60 sec timeout
 
-        # Extract all links
-        links = await page.eval_on_selector_all(
-            "div.post-featured-img-wrapper a",  # Target elements
-            "elements => elements.map(el => el.href)"
-        )
+            # Wait for elements to load
+            await page.wait_for_selector("div.post-item.search_post", timeout=10000)
 
-        # Print the extracted links
-        for link in links:
-            print(link)
+            # Extract all links
+            topic_links = await page.eval_on_selector_all(
+                "div.post-featured-img-wrapper a",  # Target elements
+                "elements => elements.map(el => el.href)"
+            )
+            topic_links = topic_links[:min(max_articles, len(topic_links))]
+            links.append((topic_links, topic))
+
+        news = []
+        for topic_links, topic in links:
+            for url in topic_links:
+                await page.goto(url, timeout=60000)
+
+                h1_text = await page.text_content('h1.post-header')
+
+                p_elements = await page.query_selector_all('div.story-detail p')
+                p_texts_content = [await p.text_content() for p in p_elements]
+                article = ' '.join(p_texts_content)
+                
+                news.append({"title": h1_text, "content": article, "topic": topic})
+
+                await page.close()
 
         # Close the browser
         await browser.close()
-
-# Run the async function
-asyncio.run(scrape_links())
+        
+        return news

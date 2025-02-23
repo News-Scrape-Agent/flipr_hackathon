@@ -36,7 +36,7 @@ def indian_express_cities_scraper(url: str, max_articles: int = 10):
                                     full_content = "\n".join(p.get_text(strip=True) for p in paragraphs)
                                 news.append({"title": title, "date_time": date_time, "content": full_content, "city": city_url.split('/')[-2]})
                             else:
-                                print(f"Failed to retrieve page, status code: {response.status_code}")
+                                print(f"Failed to retrieve page, status code: {link_response.status_code}")
                                 continue
                         except requests.exceptions.Timeout:
                             print(f"Timeout error for {link}")
