@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 
 url = "https://indianexpress.com/section/cities/"
-def indian_express_cities_scraper(url: str, max_articles: int = 5):  
+def indian_express_cities_scraper(url: str, max_articles: int = 5, location: list = ["delhi"]) -> list:  
     try:  
         response = requests.get(url)
     except Exception as e:

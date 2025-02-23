@@ -1,8 +1,8 @@
 import asyncio
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 
-url = "https://www.ndtv.com/search?searchtext="
-async def ndtv_topic_scraper(url: str, topics: list, max_articles: int = 10):
+URL = "https://www.ndtv.com/search?searchtext="
+async def ndtv_topic_scraper(url: str = URL, topics: list = [], max_articles: int = 10) -> list:
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)

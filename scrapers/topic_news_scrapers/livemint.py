@@ -3,8 +3,8 @@ import requests
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 
-url = "https://www.livemint.com/search"
-async def livemint_topic_scraper(url: str, topics: list, max_articles: int = 20) -> list:
+URL = "https://www.livemint.com/search"
+async def livemint_topic_scraper(url: str = URL, topics: list = [], max_articles: int = 20) -> list:
     links = []
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)

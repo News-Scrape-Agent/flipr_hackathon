@@ -2,9 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 
 # URL of the website (Replace with the actual URL)
-url = "https://www.news18.com/topics"
+URL = "https://www.news18.com/topics"
 
-def news18_topic_scraper(url: str, topics: list, max_articles: int = 10):
+def news18_topic_scraper(url: str = URL, topics: list = [], max_articles: int = 10) -> list:
 
     headers = {"User-Agent": "Mozilla/5.0"}
 

@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 
 url = "https://www.indiatvnews.com/"
-def india_tv_news_cities_scraper(url: str, max_articles: int = 10):
+def india_tv_news_cities_scraper(url: str, max_articles: int = 10, location: list = ["delhi"]) -> list:
     try:
         response = requests.get(url)
     except Exception as e:

@@ -31,9 +31,9 @@ def sportskeeda_link_scraper(url: str, num_links: int = 10):
     return links
 
 
-async def sportskeeda_scraper():
+URL = 'https://www.sportskeeda.com/'
+async def sportskeeda_scraper(url: str = URL) -> list:
 
-    url = 'https://www.sportskeeda.com/'
     links = sportskeeda_link_scraper(url)
 
     async with async_playwright() as p:

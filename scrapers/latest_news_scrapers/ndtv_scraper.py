@@ -1,9 +1,9 @@
 import asyncio
 from playwright.async_api import async_playwright
 
-url = "https://www.ndtv.com/india"
+URL = "https://www.ndtv.com/india"
 
-async def ndtv_scraper(url: str, max_articles: int = 10):
+async def ndtv_scraper(url: str = URL, max_articles: int = 10) -> list:
     async with async_playwright() as p:
         browser = await p.chromium.launch()
         page = await browser.new_page()

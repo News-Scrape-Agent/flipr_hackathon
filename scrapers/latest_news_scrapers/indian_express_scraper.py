@@ -1,8 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 
-url = "https://indianexpress.com/latest-news"
-def indian_express_scraper(url: str, num_pages: int = 3, num_articles: int = 10):    
+URL = "https://indianexpress.com/latest-news"
+def indian_express_scraper(url: str = URL, num_pages: int = 3, num_articles: int = 10) -> list:    
     response = requests.get(url)
 
     if response.status_code == 200:
@@ -38,8 +38,11 @@ def indian_express_scraper(url: str, num_pages: int = 3, num_articles: int = 10)
                 if link_response.status_code == 200:
                     link_soup = BeautifulSoup(link_response.text, "html.parser")
                     headline = link_soup.find("h1", itemprop="headline")
-                    title = headline.text.strip() if headline else "N/A"
-                    date_time = link_soup.find("span", itemprop="dateModified")["content"]
+                    title = headline.get_text(strip=True) if headline else "N/A"
+
+                    date_time_element = link_soup.find("span", itemprop="dateModified")
+                    date_time = date_time_element.get("content", "N/A") if date_time_element else "N/A"
+
                     content_div = link_soup.find("div", id="pcl-full-content")
                     full_content = None
                     

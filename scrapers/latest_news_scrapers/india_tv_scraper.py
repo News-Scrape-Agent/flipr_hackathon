@@ -1,8 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 
-url = "https://www.indiatvnews.com/latest-news"
-def india_tv_news_scraper(url: str, max_articles: int = 10):    
+URL = "https://www.indiatvnews.com/latest-news"
+def india_tv_news_scraper(url: str = URL, max_articles: int = 10) -> list:    
     response = requests.get(url)
 
     if response.status_code == 200:

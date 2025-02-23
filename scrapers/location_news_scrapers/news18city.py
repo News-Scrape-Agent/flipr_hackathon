@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 # URL of the website (Replace with the actual URL)
 base_url = "https://www.news18.com/cities/"
 
-def news18_cities_scraper(base_url: str, max_articles: int = 2):
+def news18_cities_scraper(base_url: str, max_articles: int = 2, location: list = ["delhi"]) -> list:
     cities = ["mumbai-news", "new-delhi-news", "bengaluru-news", "hyderabad-news", "chennai-news", "ahmedabad-news", "pune-news", "noida-news", "gurgaon-news", "kolkata-news", "jaipur-news", "lucknow-news", "patna-news", "kanpur-news"]
     extracted_links = []
     headers = {"User-Agent": "Mozilla/5.0"}

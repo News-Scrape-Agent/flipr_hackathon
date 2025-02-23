@@ -6,7 +6,7 @@ cities = ["Amritsar", "Bathinda", "Chandigarh", "Delhi", "Jalandhar", "Ludhiana"
 
 base_url = "https://www.tribuneindia.com/news/"
 
-async def tribune_city_scraper(url: str = base_url, max_articles: int = 20):
+async def tribune_city_scraper(url: str = base_url, max_articles: int = 20, location: list = ["delhi"]) -> list:
     async with async_playwright() as p:
 
         browser = await p.chromium.launch(headless=True)
