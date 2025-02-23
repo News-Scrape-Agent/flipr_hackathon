@@ -3,7 +3,11 @@ from bs4 import BeautifulSoup
 
 url = "https://www.indiatvnews.com/"
 def india_tv_news_cities_scraper(url: str, max_articles: int = 10):
-    response = requests.get(url)
+    try:
+        response = requests.get(url)
+    except Exception as e:
+        print(f"Error getting the response from {url}: {e}")
+        return []
 
     if response.status_code == 200:
         news = []
@@ -40,7 +44,7 @@ def india_tv_news_cities_scraper(url: str, max_articles: int = 10):
                                 if content_div:
                                     paragraphs = content_div.find_all("p")
                                     full_content = "\n".join(p.get_text(strip=True) for p in paragraphs)
-                                news.append({"title": title, "date_time": date_time, "content": full_content, "state": state_link.split('/')[-1]})
+                                news.append({"title": title, "date_time": date_time,  "state": state_link.split('/')[-1], "content": full_content})
                             else:
                                 print(f"Failed to retrieve page, status code: {response.status_code}")
                                 continue
@@ -53,8 +57,7 @@ def india_tv_news_cities_scraper(url: str, max_articles: int = 10):
             except requests.exceptions.Timeout:
                 print(f"Timeout error for {state_link}")
                 continue
-        return news
     else:
         print(f"Failed to retrieve page, status code: {response.status_code}")
-
+    print("Scraping complete. Total articles:", len(news))
     return news

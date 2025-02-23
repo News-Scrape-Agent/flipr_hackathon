@@ -24,8 +24,10 @@ def indian_express_scraper(url: str, num_pages: int = 3, num_articles: int = 5):
                     links.extend([a["href"] for div in divs for a in div.find_all("a", href=True)])
                 else:
                     print(f"Failed to retrieve page, status code: {response.status_code}")
+                    continue
             except requests.exceptions.Timeout:
                 print(f"Timeout error for page {i}")
+                continue
 
         links = set(links)
         filtered_links = [link for link in links if not link.startswith("https://indianexpress.com/latest-news/page/")]
@@ -47,8 +49,11 @@ def indian_express_scraper(url: str, num_pages: int = 3, num_articles: int = 5):
                     news.append({"title": title, "date_time": date_time, "content": full_content})
                 else:
                     print(f"Failed to retrieve page, status code: {response.status_code}")
+                    continue
             except requests.exceptions.Timeout:
                 print(f"Timeout error for link {link}")
+                continue
+        print("Scraping complete. Total articles:", len(news))
         return news
     else:
         print(f"Failed to retrieve page, status code: {response.status_code}")

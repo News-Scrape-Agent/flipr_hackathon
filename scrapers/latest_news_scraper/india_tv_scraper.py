@@ -16,6 +16,7 @@ def india_tv_news_scraper(url: str, max_articles: int = 10):
             if label_h2:
                 label = label_h2.get_text(strip=True)
 
+            links = list(set(links))
             links = links[:min(max_articles, len(links))]
             for link in links:
                 try:
@@ -37,8 +38,10 @@ def india_tv_news_scraper(url: str, max_articles: int = 10):
                         news.append({"title": title, "date_time": date_time, "content": full_content, "label":label})
                     else:
                         print(f"Failed to retrieve page, status code: {response.status_code}")
+                        continue
                 except requests.exceptions.Timeout:
                     print(f"Timeout error for link {link}")
+                    continue
         print("Scraping complete. Total articles:", len(news))
         return news
     else:
