@@ -61,15 +61,11 @@ def ndtv_cities_scraper(url):
         except Exception as e:
             continue
     
-    return cities_links, news
+    return news
 
-# Example usage:
 if __name__ == "__main__":
     url = "https://www.ndtv.com/"
-    cities, articles = ndtv_cities_scraper(url)
-    
-    print("Cities Links:")
-    print(cities)
+    articles = ndtv_cities_scraper(url)
     print("\nScraped News Articles:")
     for article in articles:
         print(article)
