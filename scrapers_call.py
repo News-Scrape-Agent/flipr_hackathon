@@ -6,6 +6,9 @@ import importlib
 import pandas as pd
 from pathlib import Path
 
+# Leave Indian Express City Scraper as its giving Timeout Error
+# Leave NDTV Search Scraper as Too much hardcoding is required
+
 def load_scrapers(folder_path):
     scrapers = []
     folder = Path(folder_path)

@@ -69,7 +69,7 @@ async def sportskeeda_scraper():
 
                 article_content = "\n".join(article_content)
 
-                news.append({"title": heading,"date_time": time_text,"label": "sports" ,"content": article_content})
+                news.append({"title": heading,"date_time": time_text, "content": article_content, "label": "sports"})
             except Exception as e:
                 print(f"Error navigating to {url}: {e}")
                 continue    

@@ -11,7 +11,7 @@ def news18_topic_scraper(url: str, topics: list, max_articles: int = 10):
     links = []
     for topic in topics:
         topic = topic.replace(" ", "-").lower()
-        url = f"url/{topic}/"
+        url = f"{url}/{topic}/"
 
         response = requests.get(url, headers=headers)
         soup = BeautifulSoup(response.text, "html.parser")

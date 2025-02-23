@@ -3,7 +3,7 @@ from playwright.async_api import async_playwright
 
 url = "https://www.ndtv.com/india"
 
-async def ndtv_scrapper(url: str, max_articles: int = 10):
+async def ndtv_scraper(url: str, max_articles: int = 10):
     async with async_playwright() as p:
         browser = await p.chromium.launch()
         page = await browser.new_page()
@@ -43,7 +43,7 @@ async def ndtv_scrapper(url: str, max_articles: int = 10):
                     "elements => elements.map(el => el.innerText).join(' ')"
                 )
 
-                news.append({"title": heading, "date_time": time, "label": label, "content": content })
+                news.append({"title": heading, "date_time": time, "content": content, "label": label})
             except Exception as e:
                 print(f"Error scraping {link}: {e}")
                 continue

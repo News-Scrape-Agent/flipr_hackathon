@@ -21,16 +21,14 @@ def news18_scraper(url: str, max_artiles: int = 10):
 
     extracted_links = []
     # Extract and print the text content and links
-    for idx, item in enumerate(list_items, start=1):
+    for item in list_items:
         try:
-            text = item.get_text(strip=True)  # Extract text
             link_tag = item.find("a")  # Find the <a> tag
             link = link_tag["href"] if link_tag else "No link"  # Get the href attribute if available
             if link.startswith("/"):
-                link = "https://www.news18.com" + link
+                link = f"https://www.news18.com{link}"
             extracted_links.append(link)
         except Exception as e:
-            print(f"Error extracting link {idx}: {e}")
             continue
 
     news = []
