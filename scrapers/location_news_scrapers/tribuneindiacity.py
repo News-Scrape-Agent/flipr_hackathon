@@ -4,9 +4,9 @@ from playwright.async_api import async_playwright
 states = ["Punjab", "Haryana", "Himachal Pradesh", "J K", "Uttarakhand", "Uttar Pradesh", "Rajasthan", "Madhya Pradesh", "Chhattisgarh"]
 cities = ["Amritsar", "Bathinda", "Chandigarh", "Delhi", "Jalandhar", "Ludhiana", "Patiala", "Shaharnama"]
 
-base_url = "https://www.tribuneindia.com/news/"
+BASE_URL = "https://www.tribuneindia.com/news/"
 
-async def tribune_city_scraper(url: str = base_url, max_articles: int = 20, location: list = ["delhi"]) -> list:
+async def tribune_city_scraper(url: str = BASE_URL, max_articles: int = 20, location: list = ["delhi"]) -> list:
     async with async_playwright() as p:
 
         browser = await p.chromium.launch(headless=True)
@@ -57,6 +57,5 @@ async def tribune_city_scraper(url: str = base_url, max_articles: int = 20, loca
                 news.append({"title": h1_text, "date_time": published_time, "content": article, "location": location})
 
         await browser.close()
+        print("Scraping complete. Total articles:", len(news))
         return news
-
-# asyncio.run(tribune_city_scraper())

@@ -48,4 +48,5 @@ async def ndtv_scraper(url: str = URL, max_articles: int = 10) -> list:
                 print(f"Error scraping {link}: {e}")
                 continue
         await browser.close()
+        print("Scraping complete. Total articles:", len(news))
         return news

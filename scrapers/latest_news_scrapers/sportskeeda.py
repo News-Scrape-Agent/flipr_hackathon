@@ -77,4 +77,5 @@ async def sportskeeda_scraper(url: str = URL) -> list:
         # Close the browser
         await browser.close()
 
+    print("Scraping complete. Total articles:", len(news))
     return news

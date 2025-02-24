@@ -57,4 +57,5 @@ async def indian_express_topic_scraper(url: str = URL, topics: list = [], max_ar
 
         await browser.close()
     
+    print("Scraping complete. Total articles:", len(news))
     return news

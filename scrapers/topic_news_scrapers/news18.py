@@ -41,4 +41,5 @@ def news18_topic_scraper(url: str = URL, topics: list = [], max_articles: int = 
 
             news.append({'title': h2_text, 'date_time': first_published_text, 'content': article_text, 'topic': topic})
 
+    print("Scraping complete. Total articles:", len(news))
     return news

@@ -62,4 +62,5 @@ def news18_scraper(url: str = URL, max_artiles: int = 10) -> list:
             print(f"Error scraping {link}: {e}")
             continue
 
+    print("Scraping complete. Total articles:", len(news))
     return news

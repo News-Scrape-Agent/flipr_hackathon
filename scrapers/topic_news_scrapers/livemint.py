@@ -25,7 +25,7 @@ async def livemint_topic_scraper(url: str = URL, topics: list = [], max_articles
                 ".listingNew h2.headline a",
                 "elements => elements.map(el => el.href)"
             )
-            print(topic_links)
+
             await asyncio.sleep(2)
             print(f"✅ Found {len(topic_links)} links for '{topic}'")
 
@@ -66,4 +66,5 @@ async def livemint_topic_scraper(url: str = URL, topics: list = [], max_articles
 
             news.append({'title': h1_text, 'date_time': first_published_text, 'content': article_text, 'topic': topic})
 
+    print("Scraping complete. Total articles:", len(news))
     return news

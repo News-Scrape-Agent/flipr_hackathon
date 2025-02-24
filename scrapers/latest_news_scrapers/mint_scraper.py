@@ -64,4 +64,6 @@ def livemint_scraper(url: str = URL, num_articles: int = 10) -> list:
                 continue
     except:
         print("An error occurred while scraping the website.")
+        
+    print("Scraping complete. Total articles:", len(news))
     return news

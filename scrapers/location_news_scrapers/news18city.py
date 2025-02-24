@@ -4,9 +4,9 @@ from bs4 import BeautifulSoup
 
 
 # URL of the website (Replace with the actual URL)
-base_url = "https://www.news18.com/cities/"
+BASE_URL = "https://www.news18.com/cities/"
 
-def news18_cities_scraper(base_url: str, max_articles: int = 2, location: list = ["delhi"]) -> list:
+def news18_cities_scraper(base_url: str = BASE_URL, max_articles: int = 2, location: list = ["delhi"]) -> list:
     cities = ["mumbai-news", "new-delhi-news", "bengaluru-news", "hyderabad-news", "chennai-news", "ahmedabad-news", "pune-news", "noida-news", "gurgaon-news", "kolkata-news", "jaipur-news", "lucknow-news", "patna-news", "kanpur-news"]
     extracted_links = []
     headers = {"User-Agent": "Mozilla/5.0"}
@@ -31,6 +31,7 @@ def news18_cities_scraper(base_url: str, max_articles: int = 2, location: list =
             city_urls.append(link)
 
         extracted_links += city_urls[:min(max_articles, len(city_urls))]
+        extracted_links = list(set(extracted_links))
         
     news = []
     for link in extracted_links:
@@ -53,5 +54,5 @@ def news18_cities_scraper(base_url: str, max_articles: int = 2, location: list =
         first_published_text = first_published.get_text(strip=True) if first_published else 'No First Published date found'
 
         news.append({"title": h2_text, "date_time": first_published_text, "content": article_text})
-
+    print("Scraping complete. Total articles:", len(news))
     return news

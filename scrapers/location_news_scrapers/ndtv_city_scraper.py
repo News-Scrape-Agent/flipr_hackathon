@@ -1,8 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 
-url = "https://www.ndtv.com/"
-def ndtv_cities_scraper(url: str, max_articles: int = 5, location: list = ["delhi"]) -> list:
+URL = "https://www.ndtv.com/"
+def ndtv_cities_scraper(url: str = URL, max_articles: int = 5, location: list = ["delhi"]) -> list:
     try:
         response = requests.get(url, timeout=60)
     except Exception as e:
@@ -39,6 +39,7 @@ def ndtv_cities_scraper(url: str, max_articles: int = 5, location: list = ["delh
             city_soup = BeautifulSoup(city_resp.text, "html.parser")
             news_links_elements = city_soup.select(".NwsLstPg_ttl-lnk")
             links = list({a.get("href") for a in news_links_elements if a.get("href")})
+            links = list(set(links))
             links = links[:min(max_articles, len(links))]
             for article_link in links:
                 article_link = links[0]
@@ -61,7 +62,7 @@ def ndtv_cities_scraper(url: str, max_articles: int = 5, location: list = ["delh
                     paragraphs = article_soup.select("div.Art-exp_cn p")
                     content = " ".join(p.get_text(strip=True) for p in paragraphs)
                     
-                    news.append({"title": heading, "date_time": time_text, "label": label, "location": label[:-5], "content": content})
+                    news.append({"title": heading, "date_time": time_text, "content": content, "location": label[:-5]})
                 except Exception as e:
                     continue
         except Exception as e:
