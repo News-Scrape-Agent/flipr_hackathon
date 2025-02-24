@@ -1,3 +1,4 @@
+import requests
 import logging
 from scrapers_call import scrape_and_process
 from generate_blog import generate_news_blog
@@ -7,6 +8,12 @@ from tools_config import tools
 from langchain_ollama import ChatOllama
 from langchain.schema import SystemMessage
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
+import dotenv
+import os
+from wordpress_blog_publish import publish_blog
+
+
+dotenv.load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -45,6 +52,8 @@ def process_query(query: str) -> str:
                 news = scrape_and_process(args, query)
                 blogs = generate_news_blog(news)
                 translated_blogs = translate_all_blogs(blogs, args)
+                for blog in translated_blogs:
+                    publish_blog(blog)
                 return translated_blogs
 
     return result.content
