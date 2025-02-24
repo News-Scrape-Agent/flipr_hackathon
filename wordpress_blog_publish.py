@@ -1,7 +1,7 @@
 import requests
 import dotenv
 import os
-
+import re
 
 dotenv.load_dotenv()
 
@@ -11,9 +11,13 @@ def publish_blog(full_content: str):
     username = os.getenv("WORDPRESS_USERNAME")
     password = os.getenv("WORDPRESS_PASSWORD")
     # redirect_uri = os.getenv("WORDPRESS_REDIRECT_URI")  
-
+    
+    pattern = r'\*\*Title:\*\*(.*?)\*\*'
     full_content = full_content[:5000]  # Limit content to 5000 characters
     title = full_content.split("\n")[0]  # Use the first line as the title
+    match = re.search(pattern, title, re.DOTALL)
+    if match:
+        title =  match.group(1).strip()
     content = "\n".join(full_content.split("\n")[1:])  # Use the rest as the content
     
     if not client_id or not client_secret or not username or not password:
