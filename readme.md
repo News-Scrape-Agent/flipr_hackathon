@@ -93,6 +93,11 @@ Final confirmation publishes to WordPress:
 if user_confirms:
     publish_to_wordpress(blog_content)
 ```
+## 🔄 Workflow  
+The system processes user queries using a **self-hosted Llama 3.2 3B model (via Ollama)** to extract four key parameters: **Latest News, Topics, Language, and Location**. If the model does not return parameters in the expected format, a **manual extraction script** (`process_user_query.py`) ensures accuracy. Based on these parameters, three specialized **scrapers** fetch news articles, categorized by **latest news, specific locations, or topics of interest**.  
+
+Once articles are collected, they are **summarized using the LLM**, which generates **titles and structured blog content**. If translation is required, each blog is divided into **250-character chunks**, sent to the **MyMemory API for translation**, and then reassembled. Finally, the translated or original blogs are **published to WordPress** using **OAuth2 authentication**, ensuring a seamless **end-to-end automated news-to-blog pipeline**. 🚀  
+
 
 ## 🔮 Future Roadmap
 - Enhanced NLP clustering accuracy
