@@ -28,6 +28,7 @@ async def run_selected_scrapers(query: list) -> list:
 
     if query.get('location'):
         location = query["location"]
+        print(location)
         location_news_1 = india_tv_cities_scraper.india_tv_news_cities_scraper(location=location)
         location_news_2 = ndtv_city_scraper.ndtv_cities_scraper(location=location)
         location_news_3 = news18city.news18_cities_scraper(location=location)
@@ -49,40 +50,39 @@ async def run_selected_scrapers(query: list) -> list:
 # Function to apply post-processing
 def post_process_results(data: list, query: list) -> pd.DataFrame:
 
-    # Filter data if query has both topic and location
-    if query['topic'] and "location" in query:
-        data = [item for item in data if query["location"].lower() in item["content"].lower()]
+    # # Filter data if query has both topic and location
+    # if query['topic'] and "location" in query:
+    #     data = [item for item in data if query["location"].lower() in item["content"].lower()]
     
-    # Filter data if query has both topic and latest_news
-    if query['topic'] and query['latest_news']:
-        data = [item for item in data if query["topic"].lower() in item["content"].lower()]
+    # # Filter data if query has both topic and latest_news
+    # if query['topic'] and query['latest_news']:
+    #     data = [item for item in data if query["topic"].lower() in item["content"].lower()]
 
-    # Filter data if query has both location and latest_news
-    if "location" in query and query['latest_news']:
-        data = [item for item in data if query["location"].lower() in item["content"].lower()]
+    # # Filter data if query has both location and latest_news
+    # if "location" in query and query['latest_news']:
+    #     data = [item for item in data if query["location"].lower() in item["content"].lower()]
 
-    # Filter data if query has all three
-    if query['topic'] and "location" in query and query['latest_news']:
-        data = [item for item in data if query["location"].lower() in item["content"].lower() and query["topic"].lower() in item["content"].lower()]
+    # # Filter data if query has all three
+    # if query['topic'] and "location" in query and query['latest_news']:
+    #     data = [item for item in data if query["location"].lower() in item["content"].lower() and query["topic"].lower() in item["content"].lower()]
     
     df = pd.DataFrame(data)
     df = df.drop_duplicates(subset=['content'], keep='first').reset_index(drop=True)
-    df_cleaned = df[df["content"].notna() & df["content"].str.strip().ne("")]
-    df_cleaned.to_csv('processed_news_data.csv')
-    return df_cleaned
+    df.to_csv('processed_news_data.csv')
+    return df
 
 
 # Main function to handle the pipeline
 def scrape_and_process(args: dict, user_query: str) -> pd.DataFrame:
     latest_news = args.get('latest_news', False)
     topics = normalize_topic_param(args.get('topic'))
-    locations = find_location_in_user_query(user_query)
+    locations = find_location_in_user_query(args, user_query)
 
     query = {"latest_news" : latest_news, "topic" : topics, "location" : locations}
     print(query)
     raw_data = asyncio.run(run_selected_scrapers(query))
     filtered_data = post_process_results(raw_data, query)
-
+    filtered_data = filtered_data[:3]
     # Apply inference to each row
     filtered_data["content"] = filtered_data["content"].fillna("").astype(str)
     filtered_data["predicted_category"] = filtered_data["content"].apply(predict_category)

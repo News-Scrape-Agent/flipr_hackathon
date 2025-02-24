@@ -9,7 +9,10 @@ cities = df["City"].str.lower().tolist()
 states = df["State"].str.lower().tolist()
 
 
-def find_location_in_user_query(user_query: str) -> list:
+def find_location_in_user_query(args: dict, user_query: str) -> list:
+    if "location" in args and args["location"]:
+        return [args["location"].lower()]
+    
     query_words = user_query.lower().split()  # Tokenizing query
     locations = set()
     # Check for city matches

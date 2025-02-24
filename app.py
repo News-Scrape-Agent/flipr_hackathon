@@ -43,7 +43,7 @@ def process_query(query: str) -> str:
             elif function_name == 'analyze_news_query':
                 news = scrape_and_process(args, query)
                 blogs = generate_news_blog(news)
-                return blogs[0]
+                return blogs
 
     return result.content
 

@@ -32,17 +32,21 @@ async def tribune_topic_scraper(url: str = URL, topics: list = [], max_articles:
         news = []
         for topic_links, topic in links:
             for url in topic_links:
-                await page.goto(url, timeout=20000)
+                try:
+                    await page.goto(url, timeout=20000)
 
-                h1_text = await page.text_content('h1.post-header')
+                    h1_text = await page.text_content('h1.post-header')
 
-                p_elements = await page.query_selector_all('div#story-detail p')
-                p_texts_content = [await p.text_content() for p in p_elements]
-                article = ' '.join(p_texts_content)
+                    p_elements = await page.query_selector_all('div#story-detail p')
+                    p_texts_content = [await p.text_content() for p in p_elements]
+                    article = ' '.join(p_texts_content)
 
-                published_time = await page.text_content('div.timesTamp span.updated_time')
-                
-                news.append({"title": h1_text, "date_time": published_time, "content": article, "topic": topic})
+                    published_time = await page.text_content('div.timesTamp span.updated_time')
+                    
+                    news.append({"title": h1_text, "date_time": published_time, "content": article, "topic": topic})
+                except Exception as e:
+                    print(f"Error: {e}")
+                    continue
 
         # Close the browser
         await browser.close()

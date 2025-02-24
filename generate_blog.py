@@ -47,12 +47,13 @@ def create_blog_prompt(title, content):
 # Function to generate blog post
 def generate_news_blog(news_data: pd.DataFrame) -> list:
     blogs = []
+    news = news[:10]
     for _, row in news_data.iterrows():
         # Create the prompt for each row
         prompt = create_blog_prompt(row['title'], row['content'])
-        response = model.invoke(prompt)
+        formatted_prompt = prompt.format_messages()
+        response = model.invoke(formatted_prompt)
         blogs.append(response.content)
-        break
 
     return blogs
 

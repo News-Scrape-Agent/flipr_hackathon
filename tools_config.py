@@ -31,7 +31,7 @@ tools = [
                     "enum": [
                         "elections and politics", "sports", "crime and war", "science and technology", "astrology", 
                         "business", "entertainment", "health and medicine", "environment", 
-                        "education", "global news", "local news", "lifestyle and culture", "jobs"
+                        "education", "world news", "lifestyle and culture", "jobs"
                     ],
                     "description": "The specific news topic the user is interested in, if applicable."
                 },
