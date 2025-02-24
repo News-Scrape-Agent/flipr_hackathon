@@ -43,6 +43,7 @@ WORDPRESS_CLIENT_SECRET=<your_client_secret>
 WORDPRESS_USERNAME=<wp_username>
 WORDPRESS_PASSWORD=<wp_password>
 WORDPRESS_REDIRECT_URI=http://localhost:8000/callback
+WORDPRESS_SITE_URL=<your_site_url>
 
 # Translation Service
 MYMEMORY_TRANSLATE_KEY=<your_api_key>

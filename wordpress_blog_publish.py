@@ -45,7 +45,7 @@ def publish_blog(full_content: str):
 
     access_token = token_data["access_token"]
 
-    site = "yash2310blog.wordpress.com"
+    site = os.getenv("WORDPRESS_SITE_URL")
     post_endpoint = f"https://public-api.wordpress.com/rest/v1.1/sites/{site}/posts/new"
 
     # Data for the new blog post
