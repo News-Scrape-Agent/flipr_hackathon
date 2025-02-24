@@ -11,18 +11,23 @@ async def tribune_topic_scraper(url: str = URL, topics: list = [], max_articles:
         links = []
         for topic in topics:
             topic = topic.lower().replace(" ", "-")
-            await page.goto(f"{url}/{topic}/", timeout=20000)  # 60 sec timeout
+            try:
+                await page.goto(f"{url}/{topic}/", timeout=20000)  # 60 sec timeout
 
-            # Wait for elements to load
-            await page.wait_for_selector("div.post-item.search_post", timeout=10000)
+                # Wait for elements to load
+                await page.wait_for_selector("div.post-item.search_post", timeout=10000)
 
-            # Extract all links
-            topic_links = await page.eval_on_selector_all(
-                "div.post-featured-img-wrapper a",  # Target elements
-                "elements => elements.map(el => el.href)"
-            )
-            topic_links = topic_links[:min(max_articles, len(topic_links))]
-            links.append((topic_links, topic))
+                # Extract all links
+                topic_links = await page.eval_on_selector_all(
+                    "div.post-featured-img-wrapper a",  # Target elements
+                    "elements => elements.map(el => el.href)"
+                )
+                topic_links = topic_links[:min(max_articles, len(topic_links))]
+                links.append((topic_links, topic))
+                
+            except Exception as e:
+                print(f"Error: {e}")
+                continue
 
         news = []
         for topic_links, topic in links:

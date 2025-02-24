@@ -52,6 +52,7 @@ def generate_news_blog(news_data: pd.DataFrame) -> list:
         prompt = create_blog_prompt(row['title'], row['content'])
         response = model.invoke(prompt)
         blogs.append(response.content)
+        break
 
     return blogs
 
