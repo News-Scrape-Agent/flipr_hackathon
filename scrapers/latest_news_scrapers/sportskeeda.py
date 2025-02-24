@@ -31,9 +31,9 @@ def sportskeeda_link_scraper(url: str, num_links: int = 10):
     return links
 
 
-async def sportskeeda_scraper():
+URL = 'https://www.sportskeeda.com/'
+async def sportskeeda_scraper(url: str = URL) -> list:
 
-    url = 'https://www.sportskeeda.com/'
     links = sportskeeda_link_scraper(url)
 
     async with async_playwright() as p:
@@ -69,7 +69,7 @@ async def sportskeeda_scraper():
 
                 article_content = "\n".join(article_content)
 
-                news.append({"title": heading,"date_time": time_text,"label": "sports" ,"content": article_content})
+                news.append({"title": heading,"date_time": time_text, "content": article_content, "label": "sports"})
             except Exception as e:
                 print(f"Error navigating to {url}: {e}")
                 continue    
@@ -77,4 +77,5 @@ async def sportskeeda_scraper():
         # Close the browser
         await browser.close()
 
+    print("Scraping complete. Total articles:", len(news))
     return news

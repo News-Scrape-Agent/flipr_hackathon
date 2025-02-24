@@ -2,9 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 
 # URL of the website (Replace with the actual URL)
-url = "https://www.livemint.com/latest-news"
+URL = "https://www.livemint.com/latest-news"
 
-def livemint_scraper(url: str, num_articles: int = 10):
+def livemint_scraper(url: str = URL, num_articles: int = 10) -> list:
     # Send a request to the website
     headers = {"User-Agent": "Mozilla/5.0"}
     news = []
@@ -64,4 +64,6 @@ def livemint_scraper(url: str, num_articles: int = 10):
                 continue
     except:
         print("An error occurred while scraping the website.")
+        
+    print("Scraping complete. Total articles:", len(news))
     return news

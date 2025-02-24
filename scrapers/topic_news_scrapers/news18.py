@@ -2,16 +2,16 @@ import requests
 from bs4 import BeautifulSoup
 
 # URL of the website (Replace with the actual URL)
-url = "https://www.news18.com/topics"
+URL = "https://www.news18.com/topics"
 
-def news18_topic_scraper(url: str, topics: list, max_articles: int = 10):
+def news18_topic_scraper(url: str = URL, topics: list = [], max_articles: int = 10) -> list:
 
     headers = {"User-Agent": "Mozilla/5.0"}
 
     links = []
     for topic in topics:
         topic = topic.replace(" ", "-").lower()
-        url = f"url/{topic}/"
+        url = f"{url}/{topic}/"
 
         response = requests.get(url, headers=headers)
         soup = BeautifulSoup(response.text, "html.parser")
@@ -41,4 +41,5 @@ def news18_topic_scraper(url: str, topics: list, max_articles: int = 10):
 
             news.append({'title': h2_text, 'date_time': first_published_text, 'content': article_text, 'topic': topic})
 
+    print("Scraping complete. Total articles:", len(news))
     return news

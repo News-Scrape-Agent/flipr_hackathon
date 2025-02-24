@@ -1,5 +1,7 @@
 import logging
-from scrapers_call import get_news
+import asyncio
+import pandas as pd
+from scrapers_call import scrape_and_process
 from generate_blog import generate_news_blog
 import chainlit as cl
 from tools_config import tools
@@ -41,10 +43,16 @@ def process_query(query: str) -> str:
             if function_name == "get_conversational_response":
                 return args['response']
             elif function_name == 'analyze_news_query':
-                headlines, contents = get_news(**args)
-                blogs = []
-                for headline, content in zip(headlines, contents):
-                    blogs.append(generate_news_blog(headline, content))
+
+                latest_news = args.get('latest_news', False)
+                topics = args.get('topic', [])
+                locations = args.get('location', 'delhi')
+                query = {"latest_news" : latest_news, "topic" : topics, "location" : locations}
+                news = asyncio.run(scrape_and_process(query))
+                return news
+                # blogs = []
+                # for headline, content in zip(headlines, contents):
+                #     blogs.append(generate_news_blog(headline, content))
 
     return result.content
 

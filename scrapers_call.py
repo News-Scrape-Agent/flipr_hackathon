@@ -1,79 +1,91 @@
 """
 This script is used to call the scrapers for the different websites as per LLMs Response of User's Query.
 """
-import os
-import importlib
+import asyncio
 import pandas as pd
-from pathlib import Path
+import bert_labelling
+from scrapers.latest_news_scrapers import india_tv_scraper, indian_express_scraper, ndtv_scraper, mint_scraper, news18_scraper, sportskeeda
+from scrapers.location_news_scrapers import india_tv_cities_scraper, ndtv_city_scraper, news18city, tribuneindiacity
+from scrapers.topic_news_scrapers import indianexpress, livemint, news18, tribuneindia
 
-def load_scrapers(folder_path):
-    scrapers = []
-    folder = Path(folder_path)
-    
-    if folder.exists():
-        for file in folder.glob("*.py"):
-            module_name = f"{folder.name}.{file.stem}"  # Convert path to module name
-            module = importlib.import_module(module_name)  # Import dynamically
-            if hasattr(module, "run_scraper"):
-                scrapers.append(module.run_scraper)  # Add function reference
-                
-    return scrapers
+# Define function to get state from a city
+def get_state(location):
+    df = pd.read_csv('indian_cities_and_states.csv')
+    if location in df["City"].values:
+        return df.loc[df["City"] == location, "State"].values[0].lower()
+    else:
+        return location.lower()
 
-# Load all scrapers from respective folders
-topic_news_scrapers = load_scrapers("scrapers/topic_news_scrapers")
-latest_news_scrapers = load_scrapers("scrapers/latest_news_scrapers")
-location_news_scrapers = load_scrapers("scrapers/location_news_scrapers")
+# Run selected scrapers based on user query
+async def run_selected_scrapers(query: list) -> list:
+    raw_data = []
 
-# Function to run selected scrapers based on user query
-def run_selected_scrapers(query):
-    results = []
+    if query.get('latest_news'):
+        latest_news_1 = india_tv_scraper.india_tv_news_scraper()
+        latest_news_2 = indian_express_scraper.indian_express_scraper()
+        latest_news_3 = asyncio.run(ndtv_scraper.ndtv_scraper())
+        latest_news_4 = mint_scraper.livemint_scraper()
+        latest_news_5 = news18_scraper.news18_scraper()
+        latest_news_6 = asyncio.run(sportskeeda.sportskeeda_scraper())
 
-    if query['topic']:
-        for scraper in topic_news_scrapers:
-            results.extend(scraper(query))
-
-    if "latest_news" in query:
-        for scraper in latest_news_scrapers:
-            results.extend(scraper(query))
+        raw_data.extend(latest_news_1 + latest_news_2 + latest_news_3 + latest_news_4 + latest_news_5 + latest_news_6)
 
     if "location" in query:
-        for scraper in location_news_scrapers:
-            results.extend(scraper(query))
-    
-    return results
+        location = query["location"]
+        if isinstance(location, str):  
+            state = get_state(location)
+            location = [location, state] if state.lower() != location.lower() else [location]
+
+        location_news_1 = india_tv_cities_scraper.india_tv_news_cities_scraper(location=location)
+        location_news_2 = ndtv_city_scraper.ndtv_cities_scraper(location=location)
+        location_news_3 = news18city.news18_cities_scraper(location=location)
+        location_news_4 = asyncio.run(tribuneindiacity.tribune_city_scraper(location=location))
+
+        raw_data.extend(location_news_1 + location_news_2 + location_news_3 + location_news_4)
+
+    if query.get('topic'):
+        topic_news_1 = asyncio.run(indianexpress.indian_express_topic_scraper(topics=query['topic']))
+        topic_news_2 = asyncio.run(livemint.livemint_topic_scraper(topics=query['topic']))
+        topic_news_3 = news18.news18_topic_scraper(topics=query['topic'])
+        topic_news_4 = asyncio.run(tribuneindia.tribune_topic_scraper(topics=query['topic']))
+
+        raw_data.extend(topic_news_1 + topic_news_2 + topic_news_3 + topic_news_4)
+
+    return raw_data
+
 
 # Function to apply post-processing
-# TODO: Implement case for all 3 in query and also using csv file check if city or state is present in the content
-def post_process_results(data, query):
-    df = pd.read_csv('indian_cities_and_states.csv')
+def post_process_results(data: list, query: list) -> pd.DataFrame:
+    if "location" in query:
+        location = query["location"]
+        if isinstance(location, str):  
+            state = get_state(location)
+            location = [location, state] if state.lower() != location.lower() else [location]
 
+    # Filter data if query has both topic and location
     if query['topic'] and "location" in query:
         data = [item for item in data if query["location"].lower() in item["content"].lower()]
     
+    # Filter data if query has both topic and latest_news
     if query['topic'] and query['latest_news']:
         data = [item for item in data if query["topic"].lower() in item["content"].lower()]
+
+    # Filter data if query has both location and latest_news
+    if "location" in query and query['latest_news']:
+        data = [item for item in data if query["location"].lower() in item["content"].lower()]
+
+    # Filter data if query has all three
+    if query['topic'] and "location" in query and query['latest_news']:
+        data = [item for item in data if query["location"].lower() in item["content"].lower() and query["topic"].lower() in item["content"].lower()]
     
-    return data
+    df = pd.DataFrame(data)
+    df = df.drop_duplicates(subset=['content'], keep='first').reset_index(drop=True)
+    df.to_csv('processed_news_data.csv')
+    return df
 
 # Main function to handle the pipeline
-def scrape_and_process(query):
-    raw_data = run_selected_scrapers(query)
-    processed_data = post_process_results(raw_data, query)
-    return processed_data
-
-def get_news(args):
-    """
-    Get the news based on the arguments provided.
-    
-    Arguments:
-    - args: Dictionary containing the topic, location, latest or not.
-    
-    Returns:
-    - news: A list of news articles.
-    """
-    latest_news = args.get('latest_news', False)
-    topics = args.get('topics', [])
-    locations = args.get('locations', 'delhi')
-    query = {"latest_news" : latest_news, "topics" : topics, "locations" : locations}
-    news = scrape_and_process(query)
-    return news
+def scrape_and_process(query: list) -> pd.DataFrame:
+    raw_data = asyncio.run(run_selected_scrapers(query))
+    filtered_data = post_process_results(raw_data, query)
+    # Complete the bert_labelling function for labelling the data
+    return filtered_data
