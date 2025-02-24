@@ -47,7 +47,7 @@ def create_blog_prompt(title, content):
 # Function to generate blog post
 def generate_news_blog(news_data: pd.DataFrame) -> list:
     blogs = []
-    news_data = news_data[:15]
+    news_data = news_data[:5]
     for _, row in news_data.iterrows():
         # Create the prompt for each row
         prompt = create_blog_prompt(row['title'], row['content'])

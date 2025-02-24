@@ -1,9 +1,12 @@
 import torch
 import pickle
 import os
+import warnings
 from dotenv import load_dotenv
 import pandas as pd
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+warnings.filterwarnings("ignore")
 
 load_dotenv()
 

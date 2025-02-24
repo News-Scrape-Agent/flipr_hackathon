@@ -68,6 +68,10 @@ def translate_text(text, target_lang = "hindi", source_lang='en'):
 def translate_all_blogs(blogs, args):
     if (args.get('language')):
         target_lang = args.get('language')
+        
+        if target_lang.lower() == 'english':
+            return blogs
+        
         translated_blogs = []
         for blog in blogs:
             chunks = textwrap.wrap(blog, 250)  # Split blog into 250-character chunks

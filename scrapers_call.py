@@ -24,7 +24,7 @@ async def run_selected_scrapers(query: list) -> list:
         latest_news_5 = news18_scraper.news18_scraper()
         latest_news_6 = asyncio.run(sportskeeda.sportskeeda_scraper())
 
-        raw_data.extend(latest_news_1 + latest_news_2 + latest_news_3 + latest_news_4 + latest_news_5 + latest_news_6)
+        raw_data.extend(latest_news_1[:1] + latest_news_2[:1] + latest_news_3[:1] + latest_news_4[:1] + latest_news_5[:1] + latest_news_6[:1])
 
     if query.get('location'):
         location = query["location"]
@@ -34,7 +34,7 @@ async def run_selected_scrapers(query: list) -> list:
         location_news_3 = news18city.news18_cities_scraper(location=location)
         location_news_4 = asyncio.run(tribuneindiacity.tribune_city_scraper(location=location))
 
-        raw_data.extend(location_news_1 + location_news_2 + location_news_3 + location_news_4)
+        raw_data.extend(location_news_1[:1] + location_news_2[:1] + location_news_3[:1] + location_news_4[:1])
 
     if query.get('topic'):
         topic_news_1 = asyncio.run(indianexpress.indian_express_topic_scraper(topics=query['topic']))
@@ -42,7 +42,7 @@ async def run_selected_scrapers(query: list) -> list:
         topic_news_3 = news18.news18_topic_scraper(topics=query['topic'])
         topic_news_4 = asyncio.run(tribuneindia.tribune_topic_scraper(topics=query['topic']))
 
-        raw_data.extend(topic_news_1 + topic_news_2 + topic_news_3 + topic_news_4)
+        raw_data.extend(topic_news_1[:1] + topic_news_2[:1] + topic_news_3[:1] + topic_news_4[:1])
 
     return raw_data
 
@@ -66,7 +66,7 @@ def scrape_and_process(args: dict, user_query: str) -> pd.DataFrame:
     print(query)
     raw_data = asyncio.run(run_selected_scrapers(query))
     filtered_data = post_process_results(raw_data, query)
-    filtered_data = filtered_data[:15]
+    filtered_data = filtered_data[:min(15, len(filtered_data))]  # Limit to 15 rows
     # Apply inference to each row
     filtered_data["content"] = filtered_data["content"].fillna("").astype(str)
     filtered_data["predicted_category"] = filtered_data["content"].apply(predict_category)
