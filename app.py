@@ -1,4 +1,4 @@
-import requests
+import time
 import logging
 from scrapers_call import scrape_and_process
 from generate_blog import generate_news_blog
@@ -9,7 +9,6 @@ from langchain_ollama import ChatOllama
 from langchain.schema import SystemMessage
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 import dotenv
-import os
 from wordpress_blog_publish import publish_blog
 
 
@@ -54,6 +53,7 @@ def process_query(query: str) -> str:
                 translated_blogs = translate_all_blogs(blogs, args)
                 for blog in translated_blogs:
                     publish_blog(blog)
+                    time.sleep(5)
                 return translated_blogs
 
     return result.content

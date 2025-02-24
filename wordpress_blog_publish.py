@@ -56,7 +56,7 @@ def publish_blog(full_content: str):
     }
 
     post_response = requests.post(post_endpoint, data=post_data, headers=headers, timeout=5)
-    if post_response.status_code == 201:
+    if post_response.status_code == 201 or post_response.status_code == 200:
         print("Post published successfully!")
     else:
         print("Failed to publish post.")
