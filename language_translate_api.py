@@ -4,7 +4,48 @@ import os
 
 dotenv.load_dotenv()
 
-def translate_text(text, target_lang='fr', source_lang='en'):
+language_codes = {
+    "English": "en",
+    "Spanish": "es",
+    "French": "fr",
+    "German": "de",
+    "Italian": "it",
+    "Portuguese": "pt",
+    "Dutch": "nl",
+    "Russian": "ru",
+    "Chinese (Simplified)": "zh",
+    "Chinese (Traditional)": "zh-TW",
+    "Japanese": "ja",
+    "Korean": "ko",
+    "Arabic": "ar",
+    "Hindi": "hi",
+    "Bengali": "bn",
+    "Urdu": "ur",
+    "Turkish": "tr",
+    "Persian": "fa",
+    "Greek": "el",
+    "Hebrew": "he",
+    "Polish": "pl",
+    "Swedish": "sv",
+    "Danish": "da",
+    "Finnish": "fi",
+    "Norwegian": "no",
+    "Hungarian": "hu",
+    "Czech": "cs",
+    "Slovak": "sk",
+    "Thai": "th",
+    "Vietnamese": "vi",
+    "Indonesian": "id",
+    "Malay": "ms",
+    "Filipino": "fil",
+    "Swahili": "sw"
+}
+
+def translate_text(text, target_lang = "hindi", source_lang='en'):
+    target_lang = language_codes.get(target_lang)
+    if not target_lang:
+        return "Sorry, the target language is not supported"
+    
     url = "https://api.mymemory.translated.net/get"
     params = {
         "q": text,
@@ -22,6 +63,13 @@ def translate_text(text, target_lang='fr', source_lang='en'):
     else:
         return f"Error: {response.status_code}"
 
-text = "Work hard and party harder"
-translated = translate_text(text, target_lang='hindi')
-print(translated)  
+def translate_all_blogs(blogs, args):
+    if (args.get('language')):
+        translated_blogs = []
+        for blog in blogs:
+            translated_blog = translate_text(blog['content'])
+            translated_blogs.append(translated_blog)
+        return translated_blogs
+    
+    else:
+        return blogs

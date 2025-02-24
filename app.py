@@ -1,6 +1,7 @@
 import logging
 from scrapers_call import scrape_and_process
 from generate_blog import generate_news_blog
+from language_translate_api import translate_all_blogs
 import chainlit as cl
 from tools_config import tools
 from langchain_ollama import ChatOllama
@@ -43,7 +44,8 @@ def process_query(query: str) -> str:
             elif function_name == 'analyze_news_query':
                 news = scrape_and_process(args, query)
                 blogs = generate_news_blog(news)
-                return blogs
+                translated_blogs = translate_all_blogs(blogs, args)
+                return translated_blogs
 
     return result.content
 

@@ -49,22 +49,6 @@ async def run_selected_scrapers(query: list) -> list:
 
 # Function to apply post-processing
 def post_process_results(data: list, query: list) -> pd.DataFrame:
-
-    # # Filter data if query has both topic and location
-    # if query['topic'] and "location" in query:
-    #     data = [item for item in data if query["location"].lower() in item["content"].lower()]
-    
-    # # Filter data if query has both topic and latest_news
-    # if query['topic'] and query['latest_news']:
-    #     data = [item for item in data if query["topic"].lower() in item["content"].lower()]
-
-    # # Filter data if query has both location and latest_news
-    # if "location" in query and query['latest_news']:
-    #     data = [item for item in data if query["location"].lower() in item["content"].lower()]
-
-    # # Filter data if query has all three
-    # if query['topic'] and "location" in query and query['latest_news']:
-    #     data = [item for item in data if query["location"].lower() in item["content"].lower() and query["topic"].lower() in item["content"].lower()]
     
     df = pd.DataFrame(data)
     df = df.drop_duplicates(subset=['content'], keep='first').reset_index(drop=True)
@@ -82,7 +66,7 @@ def scrape_and_process(args: dict, user_query: str) -> pd.DataFrame:
     print(query)
     raw_data = asyncio.run(run_selected_scrapers(query))
     filtered_data = post_process_results(raw_data, query)
-    filtered_data = filtered_data[:3]
+    filtered_data = filtered_data[:10]
     # Apply inference to each row
     filtered_data["content"] = filtered_data["content"].fillna("").astype(str)
     filtered_data["predicted_category"] = filtered_data["content"].apply(predict_category)
