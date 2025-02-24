@@ -1,4 +1,5 @@
 import requests
+import textwrap
 import dotenv
 import os
 
@@ -43,6 +44,7 @@ language_codes = {
 
 def translate_text(text, target_lang = "hindi", source_lang='en'):
     target_lang = language_codes.get(target_lang)
+    print(target_lang)
     if not target_lang:
         return "Sorry, the target language is not supported"
     
@@ -65,9 +67,12 @@ def translate_text(text, target_lang = "hindi", source_lang='en'):
 
 def translate_all_blogs(blogs, args):
     if (args.get('language')):
+        target_lang = args.get('language')
         translated_blogs = []
         for blog in blogs:
-            translated_blog = translate_text(blog['content'])
+            chunks = textwrap.wrap(blog, 250)  # Split blog into 250-character chunks
+            translated_chunks = [translate_text(chunk, target_lang.capitalize()) for chunk in chunks]
+            translated_blog = " ".join(translated_chunks)  # Concatenate translated chunks
             translated_blogs.append(translated_blog)
         return translated_blogs
     

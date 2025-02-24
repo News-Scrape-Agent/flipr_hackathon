@@ -66,7 +66,7 @@ def scrape_and_process(args: dict, user_query: str) -> pd.DataFrame:
     print(query)
     raw_data = asyncio.run(run_selected_scrapers(query))
     filtered_data = post_process_results(raw_data, query)
-    filtered_data = filtered_data[:10]
+    filtered_data = filtered_data[:15]
     # Apply inference to each row
     filtered_data["content"] = filtered_data["content"].fillna("").astype(str)
     filtered_data["predicted_category"] = filtered_data["content"].apply(predict_category)
