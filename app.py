@@ -1,6 +1,5 @@
 import logging
 import asyncio
-import pandas as pd
 from scrapers_call import scrape_and_process
 from generate_blog import generate_news_blog
 import chainlit as cl
@@ -23,7 +22,6 @@ prompt = ChatPromptTemplate.from_messages([
 ])
 
 # Function to process user queries
-# TODO: Add another code to translate into other language
 def process_query(query: str) -> str:
     """
     Processes user queries by invoking the AI model and calling appropriate functions.
@@ -42,17 +40,14 @@ def process_query(query: str) -> str:
 
             if function_name == "get_conversational_response":
                 return args['response']
+            
             elif function_name == 'analyze_news_query':
-
                 latest_news = args.get('latest_news', False)
                 topics = args.get('topic', [])
                 locations = args.get('location', 'delhi')
                 query = {"latest_news" : latest_news, "topic" : topics, "location" : locations}
                 news = asyncio.run(scrape_and_process(query))
-                return news
-                # blogs = []
-                # for headline, content in zip(headlines, contents):
-                #     blogs.append(generate_news_blog(headline, content))
+                generate_news_blog(news)
 
     return result.content
 
