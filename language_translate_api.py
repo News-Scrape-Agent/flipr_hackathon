@@ -1,6 +1,7 @@
 import requests
 import textwrap
 import dotenv
+import time
 import os
 
 dotenv.load_dotenv()
@@ -78,6 +79,7 @@ def translate_all_blogs(blogs, args):
             translated_chunks = [translate_text(chunk, target_lang.capitalize()) for chunk in chunks]
             translated_blog = " ".join(translated_chunks)  # Concatenate translated chunks
             translated_blogs.append(translated_blog)
+            time.sleep(1)
         return translated_blogs
     
     else:
