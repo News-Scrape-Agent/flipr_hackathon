@@ -1,38 +1,32 @@
 import pandas as pd
 import torch
+from PIL import Image
 from diffusers import StableDiffusionPipeline
 import os
 
-# summary_df = pd.read_csv("summaries.csv") 
+class StableDiffusionGenerator:
+    def __init__(self, prompt, model_name="CompVis/stable-diffusion-v1-4", output_dir="generated_images"):
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.output_dir = output_dir
+        os.makedirs(self.output_dir, exist_ok=True)
 
-# summary_df = summary_df.head(5)
+        print(f"Loading model: {model_name}")
+        self.pipe = StableDiffusionPipeline.from_pretrained(model_name)
+        self.pipe = self.pipe.to(self.device)
 
-# if "summary" not in summary_df.columns:
-#     raise ValueError("The DataFrame does not contain a 'summary' column.")
+        self.prompt = prompt
 
-# summary_df["summary"] = summary_df["summary"].fillna("").astype(str)
+    def _generate_image(self):
+        with torch.autocast(self.device):
+            result = self.pipe(self.prompt)
+        return result.images[0]
 
-prompt = "A tense crime scene in an urban Indian neighborhood, with police officers surrounding "
+    def _save_image(self, image: Image.Image, filename: str):
+        path = os.path.join(self.output_dir, filename)
+        image.save(path)
+        return path
 
-# Load the Stable Diffusion model
-device = "cuda" if torch.cuda.is_available() else "cpu"
-pipe = StableDiffusionPipeline.from_pretrained("CompVis/stable-diffusion-v1-4").to(device)
-
-# Create a directory to save images
-output_dir = "generated_images"
-os.makedirs(output_dir, exist_ok=True)
-
-# Function to generate and save images
-def generate_image(text):
-    image = pipe(text).images[0]  # Generate image from text
-    image_path = os.path.join(output_dir, f"summary.png")
-    image.save(image_path)  # Save the image
-    return image_path
-
-# Generate images for each summary
-# summary_df["image_path"] = summary_df["summary"].apply(lambda text: generate_image(text, summary_df.index[summary_df["summary"] == text][0]))
-
-path = generate_image(prompt)
-
-# # Display results
-# print(summary_df[["summary", "image_path"]])
+    def generate_and_save(self, filename="summary.png"):
+        print(f"Generating image for prompt: {self.prompt}")
+        image = self._generate_image(self.prompt)
+        return self._save_image(image, filename)

@@ -70,5 +70,6 @@ def scrape_and_process(args: dict, user_query: str) -> pd.DataFrame:
     # Apply inference to each row
     filtered_data["content"] = filtered_data["content"].fillna("").astype(str)
     filtered_data["predicted_category"] = filtered_data["content"].apply(predict_category)
+    filtered_data.to_csv('filtered_news_data.csv')
 
     return filtered_data

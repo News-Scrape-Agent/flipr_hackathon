@@ -2,23 +2,22 @@ import requests
 import dotenv
 import os
 import re
+from image import StableDiffusionGenerator
 
 dotenv.load_dotenv()
 
-def publish_blog(full_content: str):
+def publish_blog(full_content: str, with_image: bool = False):
     client_id = os.getenv("WORDPRESS_CLIENT_ID")
     client_secret = os.getenv("WORDPRESS_CLIENT_SECRET")
     username = os.getenv("WORDPRESS_USERNAME")
     password = os.getenv("WORDPRESS_PASSWORD")
     # redirect_uri = os.getenv("WORDPRESS_REDIRECT_URI")  
     
-    pattern = r'\*\*Title:\*\*(.*?)\*\*'
     full_content = full_content[:5000]  # Limit content to 5000 characters
     title = full_content.split("\n")[0]  # Use the first line as the title
-    match = re.search(pattern, title, re.DOTALL)
-    if match:
-        title =  match.group(1).strip()
+    title = title.replace("**Title:**", "Title:")
     content = "\n".join(full_content.split("\n")[1:])  # Use the rest as the content
+    content = content.replace("**Content:**", "Content:")
     
     if not client_id or not client_secret or not username or not password:
         print("Missing environment variables. Please set the required variables and try again.")
@@ -47,6 +46,23 @@ def publish_blog(full_content: str):
 
     site = os.getenv("WORDPRESS_SITE_URL")
     post_endpoint = f"https://public-api.wordpress.com/rest/v1.1/sites/{site}/posts/new"
+
+    if with_image:
+        image_gen_model = StableDiffusionGenerator(prompt=title)
+        image_path = image_gen_model.generate_and_save()
+
+        media_url = f"https://public-api.wordpress.com/rest/v1.1/sites/{site}/media/new"
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+
+        with open(image_path, 'rb') as img:
+            response = requests.post(media_url, headers=headers, files={'media[]': img})
+
+        media_data = response.json()
+        image_url = media_data['media'][0]['URL']
+        # Add the image URL to the content
+        content = f'<img src="{image_url}" alt="Alt text" style="max-width:100%; height:auto;">' + content 
 
     # Data for the new blog post
     post_data = {

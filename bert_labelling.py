@@ -1,6 +1,8 @@
 import torch
 import pickle
 import os
+import gdown
+import zipfile
 import warnings
 from dotenv import load_dotenv
 import pandas as pd
@@ -12,6 +14,24 @@ load_dotenv()
 
 # Load tokenizer and model
 MODEL_DIR = os.getenv("MODEL_DIR") 
+gdrive_file_id = "1FTyhLrMiHEawCVfklvjOJsb2Tt5lNt0D" 
+zip_path = "bert_model.zip"
+
+# Check if folder exists
+if not os.path.exists(MODEL_DIR):
+    print(f"'{MODEL_DIR}' not found. Downloading from Google Drive...")
+
+    # Download from Google Drive using gdown
+    gdown.download(f"https://drive.google.com/uc?id={gdrive_file_id}", zip_path, quiet=False)
+
+    # Extract ZIP into bert_model/
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall(MODEL_DIR)
+
+    # Clean up
+    os.remove(zip_path)
+    print(f"Model downloaded and extracted to {MODEL_DIR}")
+
 tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR)
 model = AutoModelForSequenceClassification.from_pretrained(MODEL_DIR)
 model.eval()
