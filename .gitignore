@@ -1,2 +1,14 @@
-./.env
-*.enc
+.env
+news.csv
+processed_news_data.csv
+filtered_news_data.csv
+.gitignore
+/.chainlit
+/bert_model
+/generated_images
+chainlit.md
+testing.ipynb
+/__pycache__
+scrapers/latest_news_scrapers/__pycache__
+scrapers/location_news_scrapers/__pycache__
+scrapers/topic_news_scrapers/__pycache__
