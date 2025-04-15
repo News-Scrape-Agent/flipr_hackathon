@@ -24,8 +24,8 @@ An automated pipeline that:
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/yourusername/news-clustering-llm.git
-cd news-clustering-llm
+git clone https://github.com/Yash-g2310/flipr_hackathon.git
+cd flipr_hackathon
 ```
 
 ### 2. Install Dependencies
@@ -68,8 +68,15 @@ TF_ENABLE_ONEDNN_OPTS=0
 ## 🖥️ Usage
 
 ### Start System
+1. Download and install Ollama
+2. Download Llama3.2 3B model into Ollama using:
 ```bash
-python main.py
+ollama run llama3.2:3b
+```
+then run the follwing commands:
+```bash
+ollama serve
+chainlit run app.py
 ```
 
 ### Enter Query
@@ -81,18 +88,9 @@ python main.py
 - Scrape location-specific news
 - Cluster into categories
 - Show summarized articles
+- Translate summarized articles into desired language
+- Publish translated articles onto Wordpress
 
-### Blog Generation
-- Confirm to create a blog post → Edit content → Choose translation
-
-### Publishing
-Final confirmation publishes to WordPress:
-
-```python
-# Sample publishing workflow
-if user_confirms:
-    publish_to_wordpress(blog_content)
-```
 ## 🔄 Workflow  
 The system processes user queries using a **self-hosted Llama 3.2 3B model (via Ollama)** to extract four key parameters: **Latest News, Topics, Language, and Location**. If the model does not return parameters in the expected format, a **manual extraction script** (`process_user_query.py`) ensures accuracy. Based on these parameters, three specialized **scrapers** fetch news articles, categorized by **latest news, specific locations, or topics of interest**.  
 
