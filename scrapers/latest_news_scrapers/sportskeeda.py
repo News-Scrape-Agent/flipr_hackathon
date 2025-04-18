@@ -46,6 +46,7 @@ async def sportskeeda_scraper(url: str = URL) -> list:
             return []
 
         news = []
+        print("🔍 Searching for latest news on Sportskeeda")
         for url in links:
             # Go to the webpage
             try:
@@ -69,7 +70,7 @@ async def sportskeeda_scraper(url: str = URL) -> list:
 
                 article_content = "\n".join(article_content)
 
-                news.append({"title": heading,"date_time": time_text, "content": article_content, "label": "sports"})
+                news.append({"title": heading, "date_time": time_text, "content": article_content})
             except Exception as e:
                 print(f"Error navigating to {url}: {e}")
                 continue    
@@ -77,5 +78,5 @@ async def sportskeeda_scraper(url: str = URL) -> list:
         # Close the browser
         await browser.close()
 
-    print("Scraping complete. Total articles:", len(news))
+    print("Scraping complete. Total articles scraped:", len(news))
     return news

@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 
 URL = "https://www.indiatvnews.com/"
-def india_tv_news_cities_scraper(url: str = URL, max_articles: int = 10, location: list = ["delhi"]) -> list:
+def india_tv_news_cities_scraper(url: str = URL, max_articles: int = 5, location: list = ["delhi"]) -> list:
     try:
         response = requests.get(url)
     except Exception as e:
@@ -11,6 +11,8 @@ def india_tv_news_cities_scraper(url: str = URL, max_articles: int = 10, locatio
 
     if response.status_code == 200:
         news = []
+        print("🔍 Searching for location based news on IndiaTV")
+
         soup = BeautifulSoup(response.text, "html.parser")
         state_divs = soup.find_all("div", class_="box")
         state_div = state_divs[-1]
@@ -44,7 +46,7 @@ def india_tv_news_cities_scraper(url: str = URL, max_articles: int = 10, locatio
                                 if content_div:
                                     paragraphs = content_div.find_all("p")
                                     full_content = "\n".join(p.get_text(strip=True) for p in paragraphs)
-                                news.append({"title": title, "date_time": date_time,  "state": state_link.split('/')[-1], "content": full_content})
+                                news.append({"title": title, "date_time": date_time, "content": full_content, "location": state_link.split('/')[-1]})
                             else:
                                 print(f"Failed to retrieve page, status code: {response.status_code}")
                                 continue
@@ -59,5 +61,5 @@ def india_tv_news_cities_scraper(url: str = URL, max_articles: int = 10, locatio
                 continue
     else:
         print(f"Failed to retrieve page, status code: {response.status_code}")
-    print("Scraping complete. Total articles:", len(news))
+    print("Scraping complete. Total articles scraped:", len(news))
     return news

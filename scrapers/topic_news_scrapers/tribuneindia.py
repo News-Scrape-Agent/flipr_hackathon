@@ -2,14 +2,17 @@ import asyncio
 from playwright.async_api import async_playwright
 
 URL = "https://www.tribuneindia.com/topic"
-async def tribune_topic_scraper(url: str = URL, topics: list = [], max_articles: int = 10) -> list:
+async def tribune_topic_scraper(url: str = URL, topics: list = [], max_articles: int = 5) -> list:
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
 
         links = []
+        print("🔍 Searching for topic based news on Tribune India")
+
         for topic in topics:
+            print(f"🔍 Searching for: {topic}")
             topic = topic.lower().replace(" ", "-")
             try:
                 await page.goto(f"{url}/{topic}/", timeout=20000)  # 60 sec timeout
@@ -43,7 +46,7 @@ async def tribune_topic_scraper(url: str = URL, topics: list = [], max_articles:
 
                     published_time = await page.text_content('div.timesTamp span.updated_time')
                     
-                    news.append({"title": h1_text, "date_time": published_time, "content": article, "topic": topic})
+                    news.append({"title": h1_text, "date_time": published_time, "content": article})
                 except Exception as e:
                     print(f"Error: {e}")
                     continue
@@ -51,5 +54,5 @@ async def tribune_topic_scraper(url: str = URL, topics: list = [], max_articles:
         # Close the browser
         await browser.close()
         
-        print("Scraping complete. Total articles:", len(news))
+        print("Scraping complete. Total articles scraped:", len(news))
         return news

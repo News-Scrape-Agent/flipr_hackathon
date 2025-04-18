@@ -31,22 +31,25 @@ async def ndtv_scraper(url: str = URL, max_articles: int = 10) -> list:
             return []
         
         news = []
+        print("🔍 Searching for latest news on NDTV")
         links = links[:min(max_articles, len(links))]
         
         for link in links:
             try:
                 await page.goto(link, timeout=60000)
                 heading = await page.inner_text("h1.sp-ttl")  
+
                 time = await page.inner_text("span.pst-by_lnk")  
-                label = link.split("/")[3]  
+                
                 content = await page.locator("div.Art-exp_cn p").evaluate_all(
                     "elements => elements.map(el => el.innerText).join(' ')"
                 )
 
-                news.append({"title": heading, "date_time": time, "content": content, "label": label})
+                news.append({"title": heading, "date_time": time, "content": content})
             except Exception as e:
                 print(f"Error scraping {link}: {e}")
                 continue
         await browser.close()
-        print("Scraping complete. Total articles:", len(news))
+        
+        print("Scraping complete. Total articles scraped:", len(news))
         return news

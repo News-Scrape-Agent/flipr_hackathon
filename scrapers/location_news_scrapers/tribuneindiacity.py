@@ -13,7 +13,7 @@ def get_best_matching_location(user_location: str, choices: list) -> str:
     match = difflib.get_close_matches(user_location[0].lower(), [c.lower() for c in choices], n=1, cutoff=0.6)
     return choices[[c.lower() for c in choices].index(match[0])] if match else None
 
-async def tribune_city_scraper(url: str = BASE_URL, max_articles: int = 20, location: list = ["delhi"]) -> list:
+async def tribune_city_scraper(url: str = BASE_URL, max_articles: int = 5, location: list = ["delhi"]) -> list:
     """Scrapes news articles for the best-matching state or city using Playwright."""
     extracted_links = []
     news = []
@@ -36,6 +36,7 @@ async def tribune_city_scraper(url: str = BASE_URL, max_articles: int = 20, loca
         page = await browser.new_page()
 
         try:
+            print("🔍 Searching for location based news on Tribune India")
             await page.goto(scrape_url, timeout=20000)
             await page.wait_for_selector("article.card-df h2 a", timeout=10000)
 
@@ -68,5 +69,5 @@ async def tribune_city_scraper(url: str = BASE_URL, max_articles: int = 20, loca
 
         await browser.close()
         
-    print("Scraping complete. Total articles:", len(news))
+    print("Scraping complete. Total articles scraped:", len(news))
     return news

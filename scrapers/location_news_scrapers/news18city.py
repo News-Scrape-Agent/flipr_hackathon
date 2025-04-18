@@ -59,6 +59,8 @@ def news18_cities_scraper(base_url: str = BASE_URL, max_articles: int = 5, locat
     extracted_links = list(set(city_urls[:min(max_articles, len(city_urls))]))
         
     news = []
+    print("🔍 Searching for location based news on News18")
+    
     for link in extracted_links:
         response = requests.get(link)
 
@@ -78,6 +80,9 @@ def news18_cities_scraper(base_url: str = BASE_URL, max_articles: int = 5, locat
         first_published = soup.find('ul', class_='fp')
         first_published_text = first_published.get_text(strip=True) if first_published else 'No First Published date found'
 
-        news.append({"title": h2_text, "date_time": first_published_text, "content": article_text})
-    print("Scraping complete. Total articles:", len(news))
+        location = matched_city.split('-')[0]
+
+        news.append({"title": h2_text, "date_time": first_published_text, "content": article_text, "location": location})
+
+    print("Scraping complete. Total articles scraped:", len(news))
     return news

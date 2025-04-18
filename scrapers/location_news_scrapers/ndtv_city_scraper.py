@@ -28,6 +28,7 @@ def ndtv_cities_scraper(url: str = URL, max_articles: int = 5, location: list = 
 
     cities_links = metros + other_cities
     news = []
+    print("🔍 Searching for location based news on NDTV")
 
     for city_link in cities_links:
         try:
@@ -42,12 +43,13 @@ def ndtv_cities_scraper(url: str = URL, max_articles: int = 5, location: list = 
             links = list(set(links))
             links = links[:min(max_articles, len(links))]
             for article_link in links:
-                article_link = links[0]
+
                 try:
                     article_resp = requests.get(article_link, timeout=60)
                     if article_resp.status_code != 200:
                         print(f"Failed to load article page: {article_link}")
                         continue
+
                     article_soup = BeautifulSoup(article_resp.text, "html.parser")
                     
                     heading_elem = article_soup.select_one("h1.sp-ttl")
@@ -63,10 +65,14 @@ def ndtv_cities_scraper(url: str = URL, max_articles: int = 5, location: list = 
                     content = " ".join(p.get_text(strip=True) for p in paragraphs)
                     
                     news.append({"title": heading, "date_time": time_text, "content": content, "location": label[:-5]})
+
                 except Exception as e:
+                    print(f"Error processing article {article_link}: {e}")
                     continue
+
         except Exception as e:
             continue
-    print("Scraping complete. Total articles:", len(news))
+
+    print("Scraping complete. Total articles scraped:", len(news))
     return news
 

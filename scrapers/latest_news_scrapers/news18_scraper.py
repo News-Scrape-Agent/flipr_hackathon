@@ -28,7 +28,9 @@ def news18_scraper(url: str = URL, max_artiles: int = 10) -> list:
             continue
 
     news = []
+    print("🔍 Searching for latest news on News18")
     extracted_links = extracted_links[:min(max_artiles, len(extracted_links))]
+
     for link in extracted_links:
         response = requests.get(url)
 
@@ -50,5 +52,5 @@ def news18_scraper(url: str = URL, max_artiles: int = 10) -> list:
 
         news.append({'title': h2_text, 'date_time': first_published_text, 'content': article_text})
 
-    print("Scraping complete. Total articles:", len(news))
+    print("Scraping complete. Total articles scraped:", len(news))
     return news

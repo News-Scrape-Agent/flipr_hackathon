@@ -2,14 +2,17 @@ import asyncio
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 
 URL = "https://www.ndtv.com/search?searchtext="
-async def ndtv_topic_scraper(url: str = URL, topics: list = [], max_articles: int = 10) -> list:
+async def ndtv_topic_scraper(url: str = URL, topics: list = [], max_articles: int = 5) -> list:
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)
         page = await browser.new_page()
 
+        print("🔍 Searching for topic based news on NDTV")
+        
         links = []
         for topic in topics:
+            print(f"🔍 Searching for: {topic}")
             formatted_topic = topic.lower().replace(" ", "-")
             search_url = f"{url}{formatted_topic}"
 
@@ -25,7 +28,7 @@ async def ndtv_topic_scraper(url: str = URL, topics: list = [], max_articles: in
                 links.append((topic_links, topic))
 
             except PlaywrightTimeoutError:
-                print(f"❌ Timeout! Skipping: {search_url}")
+                print(f"Timeout Error! Skipping: {search_url}")
                 continue
 
         news = []
@@ -40,10 +43,10 @@ async def ndtv_topic_scraper(url: str = URL, topics: list = [], max_articles: in
                     time = await page.text_content("span.pst-by_lnk") or "N/A"
                     content = " ".join(await page.locator("div.Art-exp_cn p").all_inner_texts())
 
-                    news.append({"title": heading, "date_time": time, "content": content, "topic": topic})
+                    news.append({"title": heading, "date_time": time, "content": content})
                 
                 except PlaywrightTimeoutError:
-                    print(f"❌ Timeout! Skipping: {url}")
+                    print(f"Timeout Error! Skipping: {url}")
                     continue
 
                 await page.close()
@@ -51,4 +54,5 @@ async def ndtv_topic_scraper(url: str = URL, topics: list = [], max_articles: in
         # Close the browser
         await browser.close()
 
+        print("Scraping Complete. Total articles scraped:", len(news))
         return news

@@ -15,9 +15,13 @@ def publish_blog(full_content: str, with_image: bool = False):
     
     full_content = full_content[:5000]  # Limit content to 5000 characters
     title = full_content.split("\n")[0]  # Use the first line as the title
-    title = title.replace("**Title:**", "Title:")
+    if title.startswith("**Title:**"):
+        title = title.replace("**Title:**", "").strip()
+    elif title.startswith("**") and title.endswith("**"):
+        title = title[2:-2]
+    
     content = "\n".join(full_content.split("\n")[1:])  # Use the rest as the content
-    content = content.replace("**Content:**", "Content:")
+    content = content.replace("**Content:**", "")
     
     if not client_id or not client_secret or not username or not password:
         print("Missing environment variables. Please set the required variables and try again.")

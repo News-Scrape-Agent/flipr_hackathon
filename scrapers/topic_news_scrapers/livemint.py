@@ -4,13 +4,16 @@ from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 
 URL = "https://www.livemint.com/search"
-async def livemint_topic_scraper(url: str = URL, topics: list = [], max_articles: int = 20) -> list:
+
+async def livemint_topic_scraper(url: str = URL, topics: list = [], max_articles: int = 5) -> list:
+
     links = []
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         await page.goto(url, timeout=60000)
 
+        print("🔍 Searching for topic based news on Live Mint")
         for topic in topics:
             print(f"🔍 Searching for: {topic}")
 
@@ -27,7 +30,6 @@ async def livemint_topic_scraper(url: str = URL, topics: list = [], max_articles
             )
 
             await asyncio.sleep(2)
-            print(f"✅ Found {len(topic_links)} links for '{topic}'")
 
             links.append((topic_links[:min(max_articles, len(topic_links))], topic))
 
@@ -64,7 +66,7 @@ async def livemint_topic_scraper(url: str = URL, topics: list = [], max_articles
                 article_text = 'No article text found'
                 first_published_text = 'No First Published date found'
 
-            news.append({'title': h1_text, 'date_time': first_published_text, 'content': article_text, 'topic': topic})
+            news.append({'title': h1_text, 'date_time': first_published_text, 'content': article_text})
 
-    print("Scraping complete. Total articles:", len(news))
+    print("Scraping complete. Total articles scraped:", len(news))
     return news

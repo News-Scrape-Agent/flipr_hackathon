@@ -4,12 +4,15 @@ from bs4 import BeautifulSoup
 # URL of the website (Replace with the actual URL)
 URL = "https://www.news18.com/topics"
 
-def news18_topic_scraper(url: str = URL, topics: list = [], max_articles: int = 10) -> list:
+def news18_topic_scraper(url: str = URL, topics: list = [], max_articles: int = 5) -> list:
 
     headers = {"User-Agent": "Mozilla/5.0"}
 
     links = []
+    print("🔍 Searching for topic based news on News18")
+
     for topic in topics:
+        print(f"🔍 Searching for: {topic}")
         topic = topic.replace(" ", "-").lower()
         url = f"{url}/{topic}/"
 
@@ -39,7 +42,7 @@ def news18_topic_scraper(url: str = URL, topics: list = [], max_articles: int = 
             first_published = soup.find('ul', class_='fp')
             first_published_text = first_published.get_text(strip=True) if first_published else 'No First Published date found'
 
-            news.append({'title': h2_text, 'date_time': first_published_text, 'content': article_text, 'topic': topic})
+            news.append({'title': h2_text, 'date_time': first_published_text, 'content': article_text})
 
-    print("Scraping complete. Total articles:", len(news))
+    print("Scraping complete. Total articles scraped:", len(news))
     return news

@@ -11,6 +11,8 @@ def indian_express_cities_scraper(url: str, max_articles: int = 5, location: lis
 
     if response.status_code == 200:
         news = []
+        print("🔍 Searching for location based news on Indian Express")
+        
         soup = BeautifulSoup(response.text, "html.parser")
         target_ul = soup.find("ul", class_="page_submenu")
         cities_url = [url+(str(a.text).lower())+'/' for a in target_ul.find_all("a", href=True)]
@@ -42,7 +44,7 @@ def indian_express_cities_scraper(url: str, max_articles: int = 5, location: lis
                                     paragraphs = content_div.find_all("p")
                                     full_content = "\n".join(p.get_text(strip=True) for p in paragraphs)
 
-                                news.append({"title": title, "date_time": date_time, "content": full_content, "city": city_url.split('/')[-2]})
+                                news.append({"title": title, "date_time": date_time, "content": full_content, "location": city_url.split('/')[-2]})
 
                             else:
                                 print(f"Failed to retrieve page, status code: {link_response.status_code}")
@@ -60,5 +62,5 @@ def indian_express_cities_scraper(url: str, max_articles: int = 5, location: lis
     else:
         print(f"Failed to retrieve page, status code: {response.status_code}")
         
-    print("Scraping complete. Total articles:", len(news))
+    print("Scraping complete. Total articles scraped:", len(news))
     return news

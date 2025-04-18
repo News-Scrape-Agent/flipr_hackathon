@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 # URL of the website (Replace with the actual URL)
 URL = "https://www.livemint.com/latest-news"
 
-def livemint_scraper(url: str = URL, num_articles: int = 10) -> list:
+def livemint_scraper(url: str = URL, num_articles: int = 5) -> list:
     # Send a request to the website
     headers = {"User-Agent": "Mozilla/5.0"}
     news = []
@@ -13,7 +13,7 @@ def livemint_scraper(url: str = URL, num_articles: int = 10) -> list:
 
         # Parse the HTML
         soup = BeautifulSoup(response.text, "html.parser")
-
+        print("🔍 Searching for latest news on Live Mint")
         # Find all <li> elements with the given class
         articles = soup.find_all("div", class_="listingNew")
 
@@ -34,7 +34,7 @@ def livemint_scraper(url: str = URL, num_articles: int = 10) -> list:
         # for idx, link in enumerate(links, 1):
         #     print(f"{idx}. {link}")
 
-        links = links[:min(num_articles,len(links))]
+        links = links[:min(num_articles, len(links))]
         for url in links:
             try:
                 response = requests.get(url)
@@ -65,5 +65,5 @@ def livemint_scraper(url: str = URL, num_articles: int = 10) -> list:
     except:
         print("An error occurred while scraping the website.")
         
-    print("Scraping complete. Total articles:", len(news))
+    print("Scraping complete. Total articles scraped:", len(news))
     return news

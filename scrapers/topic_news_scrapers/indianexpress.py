@@ -3,13 +3,14 @@ from playwright.async_api import async_playwright
 
 URL = "https://indianexpress.com/search/"
 
-async def indian_express_topic_scraper(url: str = URL, topics: list = [], max_articles: int = 10) -> list:
+async def indian_express_topic_scraper(url: str = URL, topics: list = [], max_articles: int = 5) -> list:
     news = []
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)  # Change to False for debugging
         page = await browser.new_page()
 
+        print("🔍 Searching for topic based news on Indian Express")
         for topic in topics:
             print(f"🔍 Searching for: {topic}")
             await page.goto(url, timeout=60000)
@@ -49,13 +50,13 @@ async def indian_express_topic_scraper(url: str = URL, topics: list = [], max_ar
                     paragraphs = await content_elem.query_selector_all("p") if content_elem else []
                     full_content = "\n".join([await p.text_content() for p in paragraphs])
 
-                    news.append({"title": title, "date_time": date_time, "content": full_content, "topic": topic})
+                    news.append({"title": title, "date_time": date_time, "content": full_content})
 
                 except Exception as e:
-                    print(f"❌ Error processing {link}: {e}")
+                    print(f"Error processing {link}: {e}")
                     continue
 
         await browser.close()
     
-    print("Scraping complete. Total articles:", len(news))
+    print("Scraping complete. Total articles scraped:", len(news))
     return news

@@ -24,17 +24,17 @@ async def run_selected_scrapers(query: list) -> list:
         latest_news_5 = news18_scraper.news18_scraper()
         latest_news_6 = asyncio.run(sportskeeda.sportskeeda_scraper())
 
-        raw_data.extend(latest_news_1[:1] + latest_news_2[:1] + latest_news_3[:1] + latest_news_4[:1] + latest_news_5[:1] + latest_news_6[:1])
+        raw_data.extend(latest_news_1[:2] + latest_news_2[:2] + latest_news_3[:2] + latest_news_4[:2] + latest_news_5[:2] + latest_news_6[:2])
 
     if query.get('location'):
         location = query["location"]
-        print(location)
+
         location_news_1 = india_tv_cities_scraper.india_tv_news_cities_scraper(location=location)
         location_news_2 = ndtv_city_scraper.ndtv_cities_scraper(location=location)
         location_news_3 = news18city.news18_cities_scraper(location=location)
         location_news_4 = asyncio.run(tribuneindiacity.tribune_city_scraper(location=location))
 
-        raw_data.extend(location_news_1[:1] + location_news_2[:1] + location_news_3[:1] + location_news_4[:1])
+        raw_data.extend(location_news_1[:2] + location_news_2[:2] + location_news_3[:2] + location_news_4[:2])
 
     if query.get('topic'):
         topic_news_1 = asyncio.run(indianexpress.indian_express_topic_scraper(topics=query['topic']))
@@ -42,17 +42,30 @@ async def run_selected_scrapers(query: list) -> list:
         topic_news_3 = news18.news18_topic_scraper(topics=query['topic'])
         topic_news_4 = asyncio.run(tribuneindia.tribune_topic_scraper(topics=query['topic']))
 
-        raw_data.extend(topic_news_1[:1] + topic_news_2[:1] + topic_news_3[:1] + topic_news_4[:1])
+        raw_data.extend(topic_news_1[:2] + topic_news_2[:2] + topic_news_3[:2] + topic_news_4[:2])
 
     return raw_data
 
 
 # Function to apply post-processing
-def post_process_results(data: list, query: list) -> pd.DataFrame:
+def post_process_results(df: pd.DataFrame, query: list) -> pd.DataFrame:
     
-    df = pd.DataFrame(data)
-    df = df.drop_duplicates(subset=['content'], keep='first').reset_index(drop=True)
-    df.to_csv('processed_news_data.csv')
+    # Apply BERT Inference to predict the category of news articles
+    df["content"] = df["content"].fillna("").astype(str)
+    df["news_label"] = df["content"].apply(predict_category)
+    df.to_csv('labelled_news_data.csv')
+
+    # TODO: Process the DataFrame based on the query
+    # For date_time fixing, we can hardcode time extraction for each scraper and obtain universal time format
+    # If only Location: then give priority to rows having location
+    # If only Latest News: sort by date_time
+    # If only Topic: sort by news_label
+    # If Location + Latest News: select rows with location and then sort by date_time
+    # If Location + Topic: select rows with location and then group by news_label and select top 2 from each group
+    # If Topic + Latest News: select rows with req. news_label and then sort by date_time
+    # If Location + Latest News + Topic: select rows with location first then group by req. news_label and then sort by date_time
+
+
     return df
 
 
@@ -64,12 +77,15 @@ def scrape_and_process(args: dict, user_query: str) -> pd.DataFrame:
 
     query = {"latest_news" : latest_news, "topic" : topics, "location" : locations}
     print(query)
-    raw_data = asyncio.run(run_selected_scrapers(query))
-    filtered_data = post_process_results(raw_data, query)
-    filtered_data = filtered_data[:min(15, len(filtered_data))]  # Limit to 15 rows
-    # Apply inference to each row
-    filtered_data["content"] = filtered_data["content"].fillna("").astype(str)
-    filtered_data["predicted_category"] = filtered_data["content"].apply(predict_category)
-    filtered_data.to_csv('filtered_news_data.csv')
 
-    return filtered_data
+    # Call the scrapers and collect raw news data
+    raw_data = asyncio.run(run_selected_scrapers(query))
+    df = pd.DataFrame(raw_data)
+    df = df.drop_duplicates(subset=['content'], keep='first').reset_index(drop=True)
+    df.to_csv('raw_news_data.csv')
+
+    # Filter the raw news data based on user query
+    final_news_data = post_process_results(df, query)
+    final_news_data.to_csv('final_news_data.csv')
+
+    return final_news_data

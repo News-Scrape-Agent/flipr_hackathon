@@ -2,11 +2,12 @@ import requests
 from bs4 import BeautifulSoup
 
 URL = "https://indianexpress.com/latest-news"
-def indian_express_scraper(url: str = URL, num_pages: int = 3, num_articles: int = 10) -> list:    
+def indian_express_scraper(url: str = URL, num_pages: int = 3, num_articles: int = 5) -> list:    
     response = requests.get(url)
 
     if response.status_code == 200:
         news = []
+        print("🔍 Searching for latest news on Indian Express")
         soup = BeautifulSoup(response.text, "html.parser")
         div_class_name = "nation"
         page_class_name = "page-numbers"
@@ -58,7 +59,7 @@ def indian_express_scraper(url: str = URL, num_pages: int = 3, num_articles: int
             except requests.exceptions.Timeout:
                 print(f"Timeout error for link {link}")
                 continue
-        print("Scraping complete. Total articles:", len(news))
+        print("Scraping complete. Total articles scraped:", len(news))
         return news
     else:
         print(f"Failed to retrieve page, status code: {response.status_code}")
