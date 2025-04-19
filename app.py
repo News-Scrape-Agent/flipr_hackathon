@@ -1,4 +1,5 @@
 import time
+import asyncio
 import logging
 from scrapers_call import scrape_and_process
 from generate_blog import generate_news_blog
@@ -49,12 +50,12 @@ def process_query(query: str) -> str:
             
             elif function_name == 'analyze_news_query':
                 news = scrape_and_process(args, query)
-                blogs = generate_news_blog(news)[:5]
-                translated_blogs = translate_all_blogs(blogs, args)
-                for blog in translated_blogs:
-                    publish_blog(blog)
-                    time.sleep(5)
-                return translated_blogs
+                blogs = asyncio.run(generate_news_blog(news))[:5]
+                # translated_blogs = translate_all_blogs(blogs, args)
+                # for blog in translated_blogs:
+                #     publish_blog(blog)
+                #     time.sleep(5)
+                # return translated_blogs
                 return blogs[0]
 
     return result.content

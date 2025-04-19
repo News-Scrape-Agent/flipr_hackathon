@@ -10,10 +10,9 @@ async def ndtv_scraper(url: str = URL, max_articles: int = 10) -> list:
         page = await browser.new_page()
         
         print("🔍 Searching for latest news on NDTV")
-        await cl.Message(content="🔍 Searching for latest news on NDTV").send()
 
         try:
-            await page.goto(url, timeout=60000)
+            await page.goto(url, timeout=20000)
         except Exception as e:
             print(f"Error navigating to {url}: {e}")
             await browser.close()
@@ -40,16 +39,17 @@ async def ndtv_scraper(url: str = URL, max_articles: int = 10) -> list:
         
         for link in links:
             try:
-                await page.goto(link, timeout=60000)
-                heading = await page.inner_text("h1.sp-ttl", timeout=15000)  
+                await page.goto(link, timeout=20000)
+                heading = await page.inner_text("h1.sp-ttl", timeout=10000)  
 
-                time = await page.inner_text("span.pst-by_lnk")  
+                time = await page.inner_text("span.pst-by_lnk", timeout=10000)  
                 
                 content = await page.locator("div.Art-exp_cn p").evaluate_all(
                     "elements => elements.map(el => el.innerText).join(' ')"
                 )
 
                 news.append({"title": heading, "date_time": time, "content": content})
+                
             except Exception as e:
                 print(f"Error scraping {link}: {e}")
                 continue

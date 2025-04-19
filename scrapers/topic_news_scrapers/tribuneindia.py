@@ -47,6 +47,7 @@ async def tribune_topic_scraper(url: str = URL, topics: list = [], max_articles:
                     published_time = await page.text_content('div.timesTamp span.updated_time')
                     
                     news.append({"title": h1_text, "date_time": published_time, "content": article})
+                    
                 except Exception as e:
                     print(f"Error: {e}")
                     continue

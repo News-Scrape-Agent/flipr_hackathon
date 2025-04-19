@@ -5,6 +5,7 @@ LLMs Response of User's Query.
 """
 import asyncio
 import pandas as pd
+import chainlit as cl
 from bert_labelling import predict_category
 from process_user_query import find_location_in_user_query, normalize_topic_param
 from scrapers.latest_news_scrapers import india_tv_scraper, indian_express_scraper, ndtv_scraper, mint_scraper, news18_scraper, sportskeeda
@@ -13,40 +14,73 @@ from scrapers.topic_news_scrapers import indianexpress, livemint, news18, tribun
 
 
 # Run selected scrapers based on user query
-# TODO: Add cl.Message().send() to each scraper to show on UI what is happening
-async def run_selected_scrapers(query: list) -> list:
+SCRAPER_TIMEOUT = 60
+
+# Wrapper for running each scraper safely
+async def run_scraper(name, scraper_fn):
+    try:
+        msg = cl.Message(content=f"⏳ Running `{name}` scraper...")
+        await msg.send()
+
+        result = await asyncio.wait_for(scraper_fn, timeout=SCRAPER_TIMEOUT)
+
+        msg.content = f"✅ `{name}` completed. Scraped {len(result)} articles."
+        await msg.update()
+        return result
+
+    except asyncio.TimeoutError:
+        msg.content = f"⚠️ `{name}` timed out after {SCRAPER_TIMEOUT}s."
+        await msg.update()
+        return []
+
+    except Exception as e:
+        msg.content = f"❌ `{name}` failed with error: {str(e)}"
+        await msg.update()
+        return []
+
+
+# Main function that runs all selected scrapers
+async def run_selected_scrapers(query: dict) -> list:
     raw_data = []
 
+    # -------- Latest News --------
     if query.get('latest_news'):
-        latest_news_1 = india_tv_scraper.india_tv_news_scraper()
-        latest_news_2 = indian_express_scraper.indian_express_scraper()
-        latest_news_3 = asyncio.run(ndtv_scraper.ndtv_scraper())
-        latest_news_4 = mint_scraper.livemint_scraper()
-        latest_news_5 = news18_scraper.news18_scraper()
-        latest_news_6 = asyncio.run(sportskeeda.sportskeeda_scraper())
+        latest_tasks = await asyncio.gather(
+            run_scraper("India TV", india_tv_scraper.india_tv_news_scraper()),
+            run_scraper("Indian Express", indian_express_scraper.indian_express_scraper()),
+            run_scraper("NDTV", ndtv_scraper.ndtv_scraper()),
+            run_scraper("Livemint", mint_scraper.livemint_scraper()),
+            run_scraper("News18", news18_scraper.news18_scraper()),
+            run_scraper("Sportskeeda", sportskeeda.sportskeeda_scraper())
+        )
+        for news in latest_tasks:
+            raw_data.extend(news[:2])
 
-        raw_data.extend(latest_news_1[:2] + latest_news_2[:2] + latest_news_3[:2] + latest_news_4[:2] + latest_news_5[:2] + latest_news_6[:2])
-
+    # -------- Location News --------
     if query.get('location'):
-        location = query["location"]
+        location = query['location']
+        location_tasks = await asyncio.gather(
+            run_scraper("India TV (City)", india_tv_cities_scraper.india_tv_news_cities_scraper(location=location)),
+            run_scraper("NDTV (City)", ndtv_city_scraper.ndtv_cities_scraper(location=location)),
+            run_scraper("News18 (City)", news18city.news18_cities_scraper(location=location)),
+            run_scraper("Tribune India (City)", tribuneindiacity.tribune_city_scraper(location=location)),
+        )
+        for news in location_tasks:
+            raw_data.extend(news[:2])
 
-        location_news_1 = india_tv_cities_scraper.india_tv_news_cities_scraper(location=location)
-        location_news_2 = ndtv_city_scraper.ndtv_cities_scraper(location=location)
-        location_news_3 = news18city.news18_cities_scraper(location=location)
-        location_news_4 = asyncio.run(tribuneindiacity.tribune_city_scraper(location=location))
-
-        raw_data.extend(location_news_1[:2] + location_news_2[:2] + location_news_3[:2] + location_news_4[:2])
-
+    # -------- Topic News --------
     if query.get('topic'):
-        topic_news_1 = asyncio.run(indianexpress.indian_express_topic_scraper(topics=query['topic']))
-        topic_news_2 = asyncio.run(livemint.livemint_topic_scraper(topics=query['topic']))
-        topic_news_3 = news18.news18_topic_scraper(topics=query['topic'])
-        topic_news_4 = asyncio.run(tribuneindia.tribune_topic_scraper(topics=query['topic']))
-
-        raw_data.extend(topic_news_1[:2] + topic_news_2[:2] + topic_news_3[:2] + topic_news_4[:2])
+        topic = query['topic']
+        topic_tasks = await asyncio.gather(
+            run_scraper("Indian Express (Topic)", indianexpress.indian_express_topic_scraper(topics=topic)),
+            run_scraper("Livemint (Topic)", livemint.livemint_topic_scraper(topics=topic)),
+            run_scraper("News18 (Topic)", news18.news18_topic_scraper(topics=topic)),
+            run_scraper("Tribune India (Topic)", tribuneindia.tribune_topic_scraper(topics=topic)),
+        )
+        for news in topic_tasks:
+            raw_data.extend(news[:2])
 
     return raw_data
-
 
 # Function to apply post-processing
 def post_process_results(df: pd.DataFrame, query: list) -> pd.DataFrame:
