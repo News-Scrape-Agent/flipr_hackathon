@@ -13,6 +13,7 @@ from scrapers.topic_news_scrapers import indianexpress, livemint, news18, tribun
 
 
 # Run selected scrapers based on user query
+# TODO: Add cl.Message().send() to each scraper to show on UI what is happening
 async def run_selected_scrapers(query: list) -> list:
     raw_data = []
 
@@ -51,11 +52,17 @@ async def run_selected_scrapers(query: list) -> list:
 def post_process_results(df: pd.DataFrame, query: list) -> pd.DataFrame:
     
     # Apply BERT Inference to predict the category of news articles
+    df['title'] = df['title'].apply(lambda x: x.strip() if isinstance(x, str) else x)
+    df['content'] = df['content'].apply(lambda x: x.strip() if isinstance(x, str) else x)
+
+    df['title'] = df['title'].fillna("").astype(str)
     df["content"] = df["content"].fillna("").astype(str)
+    
     df["news_label"] = df["content"].apply(predict_category)
     df.to_csv('labelled_news_data.csv')
 
     # TODO: Process the DataFrame based on the query
+    # In each row of raw_data, must remove leading and trailing spaces from content in every column
     # For date_time fixing, we can hardcode time extraction for each scraper and obtain universal time format
     # If only Location: then give priority to rows having location
     # If only Latest News: sort by date_time
@@ -85,7 +92,7 @@ def scrape_and_process(args: dict, user_query: str) -> pd.DataFrame:
     df.to_csv('raw_news_data.csv')
 
     # Filter the raw news data based on user query
-    final_news_data = post_process_results(df, query)
-    final_news_data.to_csv('final_news_data.csv')
+    filtered_news_data = post_process_results(df, query)
+    filtered_news_data.to_csv('filtered_news_data.csv')
 
-    return final_news_data
+    return filtered_news_data

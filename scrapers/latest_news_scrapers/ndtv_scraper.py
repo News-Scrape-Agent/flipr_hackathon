@@ -1,4 +1,5 @@
 import asyncio
+import chainlit as cl
 from playwright.async_api import async_playwright
 
 URL = "https://www.ndtv.com/india"
@@ -7,6 +8,10 @@ async def ndtv_scraper(url: str = URL, max_articles: int = 10) -> list:
     async with async_playwright() as p:
         browser = await p.chromium.launch()
         page = await browser.new_page()
+        
+        print("🔍 Searching for latest news on NDTV")
+        await cl.Message(content="🔍 Searching for latest news on NDTV").send()
+
         try:
             await page.goto(url, timeout=60000)
         except Exception as e:
@@ -31,13 +36,12 @@ async def ndtv_scraper(url: str = URL, max_articles: int = 10) -> list:
             return []
         
         news = []
-        print("🔍 Searching for latest news on NDTV")
         links = links[:min(max_articles, len(links))]
         
         for link in links:
             try:
                 await page.goto(link, timeout=60000)
-                heading = await page.inner_text("h1.sp-ttl")  
+                heading = await page.inner_text("h1.sp-ttl", timeout=15000)  
 
                 time = await page.inner_text("span.pst-by_lnk")  
                 

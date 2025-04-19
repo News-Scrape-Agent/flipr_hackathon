@@ -15,7 +15,7 @@ def indian_express_scraper(url: str = URL, num_pages: int = 3, num_articles: int
         total_pages = soup.find_all("a", class_=page_class_name)[1].text
 
         links = []
-        for i in range(1, min(num_pages, int(total_pages)) + 1):
+        for i in range(1, num_pages):
             try:
                 page_response = requests.get(f"{url}/page/{i}/", timeout=6)
                 if page_response.status_code == 200:
