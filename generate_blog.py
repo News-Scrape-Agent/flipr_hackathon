@@ -69,8 +69,19 @@ def create_blog_prompt(title: str, content: str) -> ChatPromptTemplate:
     
     return prompt_template
 
+def to_async_iter(sync_iterable, delay=0):
+    async def gen():
+        for item in sync_iterable:
+            yield item
+            if delay:
+                await asyncio.sleep(delay)
+    return gen()
+
 # Function to generate a blog with streaming to keep connection alive
 async def generate_blog_streaming(prompt_messages, row_title):
+    # Create a parser to handle the streaming output
+    parser = StrOutputParser()
+    
     # Create a message that will be updated with streaming content
     msg = cl.Message(content=f"⏳ Generating blog for: **{row_title}**")
     await msg.send()
@@ -78,32 +89,26 @@ async def generate_blog_streaming(prompt_messages, row_title):
     # To track the generated content
     generated_text = ""
     
+    # Function to handle each token as it's generated
+    async def handle_token(token: str):
+        nonlocal generated_text
+        generated_text += token
+        # Update the message every few tokens to avoid too many updates
+        if len(token) > 0 and len(generated_text) % 10 == 0:
+            msg.content = f"⏳ Generating: {generated_text}..."
+            await msg.update()
+            # Send a keep-alive signal every few tokens
+            await asyncio.sleep(0.01)
+    
     # Stream the response
     try:
-        # Use invoke instead of stream for better compatibility
-        # Keep the connection alive by periodically updating the UI
-        update_interval = 0.5  # Update UI every 0.5 seconds
-        start_time = asyncio.get_event_loop().time()
-        
-        # Start a background task
-        generation_task = asyncio.create_task(model.ainvoke(prompt_messages))
-        
-        # Update the UI periodically while waiting for the completion
-        while not generation_task.done():
-            current_time = asyncio.get_event_loop().time()
-            elapsed = current_time - start_time
-            
-            # Update the message with time elapsed
-            msg.content = f"⏳ Generating blog for: **{row_title}** ({elapsed:.1f}s elapsed)"
-            await msg.update()
-            
-            # Wait a bit before updating again
-            await asyncio.sleep(update_interval)
-        
-        # Get the result once complete
-        response = await generation_task
-        generated_text = response.content
-        
+        stream = model.stream(prompt_messages)
+        stream = to_async_iter(model.stream(prompt_messages), delay=0.01)
+        async for chunk in stream:
+            if chunk.content:
+                await handle_token(chunk.content)
+                # Small delay to prevent overloading
+                await asyncio.sleep(0.01)
     except Exception as e:
         msg.content = f"❌ Error generating blog: {str(e)}"
         await msg.update()
