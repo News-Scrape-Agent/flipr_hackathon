@@ -1,5 +1,8 @@
 # News Aggregator & Blog Publishing System
 
+## Video
+https://github.com/user-attachments/assets/03560c5d-3cba-413f-bc03-80156082d9d9
+
 ## 📋 Overview
 An automated pipeline that:
 1. Scrapes news from websites 
