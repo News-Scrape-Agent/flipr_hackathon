@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+from datetime import datetime
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 
@@ -10,11 +11,13 @@ async def livemint_topic_scraper(url: str = URL, topics: list = [], max_articles
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
-        await page.goto(url, timeout=60000)
+        await page.goto(url, timeout=30000, wait_until="domcontentloaded")
+        await page.route("**/*", lambda route: asyncio.create_task(
+            route.abort() if route.request.resource_type in ["image", "stylesheet", "font", "media"] else route.continue_()))
 
-        print("🔍 Searching for topic based news on Live Mint")
+        print("Searching for topic based news on Live Mint...")
         for topic in topics:
-            print(f"🔍 Searching for: {topic}")
+            print(f"Searching for: {topic}")
 
             await page.fill("#searchField", topic)
             await page.press("#searchField", "Enter")
@@ -27,13 +30,14 @@ async def livemint_topic_scraper(url: str = URL, topics: list = [], max_articles
             )
 
             await asyncio.sleep(2)
-            links.append((topic_links[:min(max_articles, len(topic_links))], topic))
+            links.append((topic_links[:min(2 * max_articles, len(topic_links))], topic))
 
         await browser.close()
 
     news = []
     async with aiohttp.ClientSession() as session:
         for topic_links, topic in links:
+            cnt = 0
             for url in topic_links:
                 try:
                     async with session.get(url) as response:
@@ -49,26 +53,34 @@ async def livemint_topic_scraper(url: str = URL, topics: list = [], max_articles
                         
                         if h1_tag:
                             h1_text = h1_tag.get_text()
-                            story_paras = soup.find_all('div', class_="storyParagraph", id=lambda x: x and x.startswith('article-index'))
-                            story_texts = [para.get_text() for para in story_paras]
-                            article_text = ' '.join(story_texts)
 
                             first_published = soup.find('div', class_=lambda x: x and x.startswith('storyPage_date'))
-                            first_published_text = first_published.get_text(strip=True) if first_published else 'No First Published date found'
+                            story_paras = soup.find_all('div', class_="storyParagraph", id=lambda x: x and x.startswith('article-index'))
+
                         elif headh1_tag:
                             h1_text = headh1_tag.get_text()
-                            story_paras = soup.find_all('div', class_="liveSecIntro")
-                            story_texts = [para.get_text() for para in story_paras]
-                            article_text = ' '.join(story_texts)
 
                             first_published = soup.find('span', class_="articleInfo pubtime fl")
-                            first_published_text = first_published.get_text(strip=True) if first_published else 'No First Published date found'
-                        else:
-                            h1_text = 'No <h1> tag found'
-                            article_text = 'No article text found'
-                            first_published_text = 'No First Published date found'
+                            story_paras = soup.find_all('div', class_="liveSecIntro")
 
-                        news.append({'title': h1_text, 'date_time': first_published_text, 'content': article_text})
+                        else:
+                            continue
+
+                        first_published_text = first_published.get_text(strip=True) if first_published else "No date found"
+                        for prefix in ["Updated", "Published"]:
+                            if first_published_text.startswith(prefix):
+                                dt = first_published_text.replace(prefix, "").replace("IST", "").replace(",", "").strip()
+                                date_time = datetime.strptime(dt, "%d %b %Y %I:%M %p")
+                            else:
+                                date_time = first_published_text
+
+                        story_texts = [para.get_text() for para in story_paras]
+                        article_text = ' '.join(story_texts)
+
+                        news.append({'title': h1_text, 'date_time': date_time, 'content': article_text})
+                        cnt += 1
+                        if cnt >= max_articles:
+                            break
                         
                 except Exception as e:
                     print(f"Error processing {url}: {e}")

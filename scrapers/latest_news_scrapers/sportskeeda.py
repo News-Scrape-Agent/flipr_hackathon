@@ -1,9 +1,12 @@
 import requests
 import asyncio
-from playwright.async_api import async_playwright
 from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
+from playwright.async_api import async_playwright
 
-def sportskeeda_link_scraper(url: str, num_links: int = 10):
+
+URL = 'https://www.sportskeeda.com/'
+async def sportskeeda_scraper(url: str = URL, max_articles: int = 10) -> list:
     try:
         response = requests.get(url)
 
@@ -24,21 +27,13 @@ def sportskeeda_link_scraper(url: str, num_links: int = 10):
                 full_link = requests.compat.urljoin(url, a_tag["href"])  # Convert relative to absolute URL
                 links.append(full_link)
 
-        links = links[:min(num_links, len(links))]
+        links = links[:min(2 * max_articles, len(links))]
     except requests.exceptions.RequestException as e:
         print(f"Error getting the response from {url}: {e}")
-        return []
-    return links
-
-
-URL = 'https://www.sportskeeda.com/'
-async def sportskeeda_scraper(url: str = URL) -> list:
-
-    links = sportskeeda_link_scraper(url)
 
     async with async_playwright() as p:
         # Launch the browser
-        browser = await p.chromium.launch(headless=True)  # Run in headless mode for faster execution
+        browser = await p.chromium.launch(headless=True)
         try:
             page = await browser.new_page()
         except Exception as e:
@@ -46,22 +41,34 @@ async def sportskeeda_scraper(url: str = URL) -> list:
             return []
 
         news = []
-        print("🔍 Searching for latest news on Sportskeeda")
+        print("Searching for latest news on Sportskeeda...")
+
+        ctr = 0
         for url in links:
-            # Go to the webpage
             try:
-                await page.goto(url)
-                await page.wait_for_load_state("domcontentloaded")  # Ensures the page content is fully loaded
+                await page.goto(url, timeout=20000, wait_until='domcontentloaded')
+                await page.route("**/*", lambda route: asyncio.create_task(
+                    route.abort() if route.request.resource_type in ["image", "stylesheet", "font", "media"] else route.continue_()))
             
                 heading = await page.locator('h1#heading.title').text_content()
-                heading = heading.strip() if heading else "No heading found"
+                heading = heading.strip() if heading else "No title found"
 
                 time_tag = await page.locator('div.article-box div.date-pub.timezone-date').text_content()
-                time_text = time_tag.strip() if time_tag else "No time found"
+                date_time = time_tag.strip() if time_tag else None
+                if date_time:
+                    if ('GMT' in date_time):
+                        date_time = date_time.replace("Modified", "").replace("GMT", "").replace(",", "").strip()
+                        dt = datetime.strptime(date_time, "%b %d %Y %H:%M")
+                        date_time = dt + timedelta(hours=5, minutes=30)        # Convert to IST manually (GMT + 5:30)
+                    else:
+                        date_time = date_time.replace("Modified", "").replace("IST", "").replace(",", "").strip()
+                        date_time = datetime.strptime(date_time, "%b %d %Y %H:%M")
 
                 # Extract article content
                 article_content = []
                 paragraphs = await page.locator('p[data-imp-id^="article_paragraph"]').all()
+                if (len(paragraphs) == 0):
+                    continue
 
                 for p in paragraphs:
                     p_text = await p.text_content()
@@ -70,12 +77,15 @@ async def sportskeeda_scraper(url: str = URL) -> list:
 
                 article_content = "\n".join(article_content)
 
-                news.append({"title": heading, "date_time": time_text, "content": article_content})
+                news.append({"title": heading, "date_time": date_time, "content": article_content})
+                ctr += 1
+                if ctr >= max_articles:
+                    break
+
             except Exception as e:
                 print(f"Error navigating to {url}: {e}")
                 continue    
 
-        # Close the browser
         await browser.close()
 
     print("Scraping complete. Total articles scraped:", len(news))

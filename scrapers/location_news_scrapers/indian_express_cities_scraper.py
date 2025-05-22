@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+from datetime import datetime
 from bs4 import BeautifulSoup
 
 URL = "https://indianexpress.com/section/cities/"
@@ -14,7 +15,7 @@ async def indian_express_cities_scraper(url: str = URL, max_articles: int = 5, l
                 
                 html = await response.text()
                 news = []
-                print("🔍 Searching for location based news on Indian Express")
+                print("Searching for location based news on Indian Express...")
                 
                 soup = BeautifulSoup(html, "html.parser")
                 target_ul = soup.find("ul", class_="page_submenu")
@@ -33,8 +34,9 @@ async def indian_express_cities_scraper(url: str = URL, max_articles: int = 5, l
                                     
                                 news_links = [a["href"] for a in new_div.find_all("a", href=True)]
                                 news_links = list(set(news_links))
-                                news_links = news_links[:min(max_articles, len(news_links))]
+                                news_links = news_links[:min(2 * max_articles, len(news_links))]
                                 
+                                cnt = 0
                                 for link in news_links:
                                     try:
                                         async with session.get(link, timeout=10) as link_response:
@@ -47,14 +49,20 @@ async def indian_express_cities_scraper(url: str = URL, max_articles: int = 5, l
                                                 
                                                 date_time_element = link_soup.find("span", itemprop="dateModified")
                                                 date_time = date_time_element["content"] if date_time_element else "No date found"
+                                                if date_time != "No date found":
+                                                    date_time = datetime.fromisoformat(date_time)
                                                 
                                                 content_div = link_soup.find("div", id="pcl-full-content")
-                                                full_content = None
                                                 if content_div:
                                                     paragraphs = content_div.find_all("p")
                                                     full_content = "\n".join(p.get_text(strip=True) for p in paragraphs)
+                                                else:
+                                                    continue
                                                 
                                                 news.append({"title": title, "date_time": date_time, "content": full_content, "location": city_url.split('/')[-2]})
+                                                cnt += 1
+                                                if cnt >= max_articles:
+                                                    break
                                                 
                                             else:
                                                 print(f"Failed to retrieve page, status code: {link_response.status}")

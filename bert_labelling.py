@@ -49,14 +49,11 @@ def predict_category(text):
     # Tokenize input text
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
     
-    # Move tensors to device
     inputs = {k: v.to(device) for k, v in inputs.items()}
     
-    # Run inference
     with torch.no_grad():
         outputs = model(**inputs)
     
-    # Get predicted class index
     predicted_class_idx = torch.argmax(outputs.logits, dim=-1).item()
     
     # Convert index to category name

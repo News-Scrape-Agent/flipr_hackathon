@@ -1,11 +1,12 @@
 import aiohttp
 import asyncio
+from datetime import datetime
 from bs4 import BeautifulSoup
 
 # URL of the website
 URL = "https://www.news18.com/news/"
 
-async def news18_scraper(url: str = URL, max_articles: int = 10) -> list:
+async def news18_scraper(url: str = URL, max_articles: int = 5) -> list:
     # Send a request to the website
     headers = {"User-Agent": "Mozilla/5.0"}
     
@@ -35,9 +36,10 @@ async def news18_scraper(url: str = URL, max_articles: int = 10) -> list:
                     continue
             
             news = []
-            print("🔍 Searching for latest news on News18")
-            extracted_links = extracted_links[:min(max_articles, len(extracted_links))]
-            
+            print("Searching for latest news on News18...")
+            extracted_links = extracted_links[:min(2 * max_articles, len(extracted_links))]
+
+            ctr = 0
             for link in extracted_links:
                 try:
                     async with session.get(link) as article_response:
@@ -49,20 +51,27 @@ async def news18_scraper(url: str = URL, max_articles: int = 10) -> list:
                         article_html = await article_response.text()
                         article_soup = BeautifulSoup(article_html, 'html.parser')
                         
-                        # Extract the <h2> tag content
                         h2_tag = article_soup.find('h2', id=lambda x: x and x.startswith('asubttl'))
-                        h2_text = h2_tag.get_text() if h2_tag else 'No <h2> tag found'
+                        h2_text = h2_tag.get_text() if h2_tag else 'No title found'
+
+                        first_published = article_soup.find('ul', class_='fp')
+                        date_time = first_published.get_text(strip=True) if first_published else None
+                        if date_time:
+                            dt = date_time.replace("First Published:", "").replace(",", "").replace("IST", "").strip()
+                            date_time = datetime.strptime(dt, "%B %d %Y %H:%M")
+                        else:
+                            date_time = "No date found"
                         
-                        # Extract all text content from story_para_ classes
                         story_paras = article_soup.find_all('p', class_=lambda x: x and x.startswith('story_para_'))
                         story_texts = [para.get_text() for para in story_paras]
+                        if (len(story_texts) == 0):
+                            continue
                         article_text = ' '.join(story_texts)
                         
-                        # Extract the "First Published" date and time
-                        first_published = article_soup.find('ul', class_='fp')
-                        first_published_text = first_published.get_text(strip=True) if first_published else 'No First Published date found'
-                        
-                        news.append({'title': h2_text, 'date_time': first_published_text, 'content': article_text})
+                        news.append({'title': h2_text, 'date_time': date_time, 'content': article_text})
+                        ctr += 1
+                        if ctr >= max_articles:
+                            break
                         
                 except Exception as e:
                     print(f"Error processing article {link}: {e}")

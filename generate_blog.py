@@ -4,7 +4,6 @@ import chainlit as cl
 from langchain_ollama import ChatOllama
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import SystemMessage, HumanMessage
-from langchain_core.output_parsers import StrOutputParser
 
 model = ChatOllama(model="llama3.2:3b", temperature=0.4, num_ctx=2048)
 
@@ -79,9 +78,6 @@ def to_async_iter(sync_iterable, delay=0):
 
 # Function to generate a blog with streaming to keep connection alive
 async def generate_blog_streaming(prompt_messages, row_title):
-    # Create a parser to handle the streaming output
-    parser = StrOutputParser()
-    
     # Create a message that will be updated with streaming content
     msg = cl.Message(content=f"⏳ Generating blog for: **{row_title}**")
     await msg.send()
@@ -141,7 +137,7 @@ async def generate_news_blog(news_data: pd.DataFrame) -> list:
             # Format the blog for display
             formatted_blog = format_blogs([blog_content])[0]
             
-            # Update the message with the final generated blog - correct way
+            # Update the message with the final generated blog
             article_msg.content = f"**Blog {i+1}/{total_articles}**\n\n{formatted_blog}"
             await article_msg.update()
             
@@ -149,7 +145,7 @@ async def generate_news_blog(news_data: pd.DataFrame) -> list:
             formatted_blogs.append(formatted_blog)
             
         else:
-            # Update progress - correct way
+            # Update progress
             article_progress_msg.content = f"❌ Failed to generate blog for article {i+1}/{total_articles}"
             await article_progress_msg.update()
         

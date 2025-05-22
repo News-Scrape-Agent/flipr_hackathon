@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+from datetime import datetime
 from bs4 import BeautifulSoup
 
 URL = "https://indianexpress.com/latest-news"
@@ -13,7 +14,7 @@ async def indian_express_scraper(url: str = URL, num_pages: int = 3, num_article
                 return []
             
             news = []
-            print("🔍 Searching for latest news on Indian Express")
+            print("Searching for latest news on Indian Express...")
             
             links = []
             # Gather links from multiple pages
@@ -37,10 +38,10 @@ async def indian_express_scraper(url: str = URL, num_pages: int = 3, num_article
                     print(f"Error processing page {i}: {e}")
 
             links = list(set(links))
-            filtered_links = links[:min(num_articles, len(links))]
             
+            cnt = 0
             # Process article links
-            for link in filtered_links:
+            for link in links:
                 try:
                     async with session.get(link, timeout=6) as link_response:
                         if link_response.status == 200:
@@ -48,19 +49,24 @@ async def indian_express_scraper(url: str = URL, num_pages: int = 3, num_article
                             link_soup = BeautifulSoup(link_html, "html.parser")
                             
                             headline = link_soup.find("h1", itemprop="headline")
-                            title = headline.get_text(strip=True) if headline else "N/A"
+                            title = headline.get_text(strip=True) if headline else "No title found"
                             
                             date_time_element = link_soup.find("span", itemprop="dateModified")
-                            date_time = date_time_element.get("content", "N/A") if date_time_element else "N/A"
+                            date_time = date_time_element.get("content", "No date found") if date_time_element else "No date found"
+                            if date_time != "No date found":
+                                date_time = datetime.fromisoformat(date_time)
                             
                             content_div = link_soup.find("div", id="pcl-full-content")
-                            full_content = None
-                            
                             if content_div:
                                 paragraphs = content_div.find_all("p")
                                 full_content = "\n".join(p.get_text(strip=True) for p in paragraphs)
+                            else:
+                                continue
                             
                             news.append({"title": title, "date_time": date_time, "content": full_content})
+                            cnt += 1
+                            if cnt >= num_articles:
+                                break
                             
                         else:
                             print(f"Failed to retrieve page, status code: {link_response.status}")

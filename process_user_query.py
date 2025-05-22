@@ -10,6 +10,10 @@ states = df["State"].str.lower().tolist()
 
 
 def find_location_in_user_query(args: dict, user_query: str) -> list:
+    """
+    Finds the location in the user query if model fails to detect it.
+    It returns the list of location.
+    """
     if "location" in args and args["location"]:
         return [args["location"].lower()]
     

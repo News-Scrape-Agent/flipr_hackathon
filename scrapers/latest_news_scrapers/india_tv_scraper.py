@@ -1,10 +1,11 @@
 import aiohttp
 import asyncio
+from datetime import datetime
 from bs4 import BeautifulSoup
 
 URL = "https://www.indiatvnews.com/latest-news"
 
-async def india_tv_news_scraper(url: str = URL, max_articles: int = 10) -> list:
+async def india_tv_news_scraper(url: str = URL, max_articles: int = 5) -> list:
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             if response.status != 200:
@@ -13,7 +14,7 @@ async def india_tv_news_scraper(url: str = URL, max_articles: int = 10) -> list:
             
             html = await response.text()
             news = []
-            print("🔍 Searching for latest news on IndiaTV")
+            print("Searching for latest news on IndiaTV...")
             soup = BeautifulSoup(html, "html.parser")
             columns = soup.find_all("div", class_="box")
             
@@ -22,9 +23,9 @@ async def india_tv_news_scraper(url: str = URL, max_articles: int = 10) -> list:
                 links.extend([a['href'] for a in column.find_all("a", href=True)])
             
             links = list(set(links))
-            links = links[:min(max_articles, len(links))]
+            links = links[:min(2 * max_articles, len(links))]
+
             ctr = 0
-            
             for link in links:
                 try:
                     async with session.get(link, timeout=6) as link_response:
@@ -33,21 +34,24 @@ async def india_tv_news_scraper(url: str = URL, max_articles: int = 10) -> list:
                             link_soup = BeautifulSoup(link_html, "html.parser")
                             
                             headline = link_soup.find("h1", class_="arttitle")
-                            title = headline.text if headline else "No title found"
+                            title = headline.text.strip() if headline else "No title found"
                             
                             date_time = link_soup.find("time")
-                            date_time = date_time["datetime"] if date_time else None
+                            date_time = date_time["datetime"] if date_time else "No date found"
+                            if date_time != "No date found":
+                                date_time = datetime.fromisoformat(date_time)
                             
                             content_div = link_soup.find("div", class_="content", id="content")
-                            full_content = None
                             if content_div:
                                 paragraphs = content_div.find_all("p")
                                 full_content = "\n".join(p.get_text(strip=True) for p in paragraphs)
+                            else:
+                                continue
                             
                             news.append({"title": title, "date_time": date_time, "content": full_content})
                             
                             ctr += 1
-                            if ctr >= 2:
+                            if ctr >= max_articles:
                                 break
                         else:
                             print(f"Failed to retrieve page, status code: {link_response.status}")

@@ -1,5 +1,6 @@
 import asyncio
 import difflib
+from datetime import datetime
 from playwright.async_api import async_playwright
 
 # List of predefined states and cities
@@ -36,7 +37,7 @@ async def tribune_city_scraper(url: str = BASE_URL, max_articles: int = 5, locat
         page = await browser.new_page()
 
         try:
-            print("🔍 Searching for location based news on Tribune India")
+            print("Searching for location based news on Tribune India...")
             await page.goto(scrape_url, timeout=20000)
             await page.wait_for_selector("article.card-df h2 a", timeout=10000)
 
@@ -44,25 +45,41 @@ async def tribune_city_scraper(url: str = BASE_URL, max_articles: int = 5, locat
                 "article.card-df h2 a", 
                 "elements => elements.map(el => el.href)"
             )
-            extracted_links = list(set(links[:min(max_articles, len(links))]))
+            extracted_links = list(set(links[:min(2 * max_articles, len(links))]))
 
         except Exception as e:
             print(f"Error scraping {matched_location}: {e}")
 
-        
+        ctr = 0
         for url in extracted_links:
             try:
-                await page.goto(url, timeout=20000)
+                await page.goto(url, timeout=20000, wait_until="domcontentloaded")
+                await page.route("**/*", lambda route: asyncio.create_task(
+                    route.abort() if route.request.resource_type in ["image", "stylesheet", "font", "media"] else route.continue_()))
 
                 h1_text = await page.text_content('h1.post-header')
+                if not h1_text:
+                    h1_text = 'No title found'
+
+                elems = await page.query_selector_all("span.updated_time")
+                if len(elems) >= 2:
+                    elem = await elems[1].inner_text()
+                    dt = elem.replace("Updated At :", "").replace("IST", "").strip()
+                    date_time = datetime.strptime(dt, "%I:%M %p %b %d, %Y")
+                else:
+                    date_time = "No date found"
 
                 p_elements = await page.query_selector_all('div#story-detail p')
                 p_texts_content = [await p.text_content() for p in p_elements]
+                if len(p_texts_content) == 0:
+                    continue
                 article = ' '.join(p_texts_content)
-
-                published_time = await page.text_content('div.timesTamp span.updated_time')
                 
-                news.append({"title": h1_text, "date_time": published_time, "content": article, "location": location})
+                news.append({"title": h1_text, "date_time": date_time, "content": article, "location": location[0].lower()})
+                ctr += 1
+                if ctr >= max_articles:
+                    break
+
             except Exception as e:
                 print(f"Error scraping article: {e}")
                 continue

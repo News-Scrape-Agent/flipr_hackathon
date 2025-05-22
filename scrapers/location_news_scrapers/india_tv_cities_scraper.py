@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+from datetime import datetime
 from bs4 import BeautifulSoup
 
 URL = "https://www.indiatvnews.com/"
@@ -14,7 +15,7 @@ async def india_tv_news_cities_scraper(url: str = URL, max_articles: int = 5, lo
                 
                 html = await response.text()
                 news = []
-                print("🔍 Searching for location based news on IndiaTV")
+                print("Searching for location based news on IndiaTV...")
 
                 soup = BeautifulSoup(html, "html.parser")
                 state_divs = soup.find_all("div", class_="box")
@@ -31,8 +32,9 @@ async def india_tv_news_cities_scraper(url: str = URL, max_articles: int = 5, lo
                                 news_links = [a["href"] for news_div in news_ul for a in news_div.find_all("a", href=True)]
                                 
                                 news_links = list(set(news_links))
-                                news_links = news_links[:min(max_articles, len(news_links))]
+                                news_links = news_links[:min(2 * max_articles, len(news_links))]
                                 
+                                ctr = 0
                                 for news_link in news_links:
                                     if len(news_link.split('/')) != 5:
                                         continue
@@ -43,18 +45,24 @@ async def india_tv_news_cities_scraper(url: str = URL, max_articles: int = 5, lo
                                                 news_soup = BeautifulSoup(news_html, "html.parser")
                                                 
                                                 headline = news_soup.find("h1", class_="arttitle")
-                                                title = headline.text if headline else "No title found"
+                                                title = headline.text.strip() if headline else "No title found"
                                                 
                                                 date_time = news_soup.find("time")
-                                                date_time = date_time["datetime"] if date_time else None
+                                                date_time = date_time["datetime"] if date_time else "No date found"
+                                                if date_time != "No date found":
+                                                    date_time = datetime.fromisoformat(date_time)
                                                 
                                                 content_div = news_soup.find("div", class_="content", id="content")
-                                                full_content = None
                                                 if content_div:
                                                     paragraphs = content_div.find_all("p")
                                                     full_content = "\n".join(p.get_text(strip=True) for p in paragraphs)
+                                                else:
+                                                    continue
                                                 
                                                 news.append({"title": title, "date_time": date_time, "content": full_content, "location": state_link.split('/')[-1]})
+                                                ctr += 1
+                                                if ctr >= max_articles:
+                                                    break
                                                 
                                             else:
                                                 print(f"Failed to retrieve page, status code: {news_response.status}")
