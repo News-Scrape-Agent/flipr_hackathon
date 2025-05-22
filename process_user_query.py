@@ -1,61 +1,82 @@
+# Installation instructions:
+#   pip install spacy pandas rapidfuzz geopy
+#   python -m spacy download en_core_web_trf
+#   python -m spacy download en_core_web_sm
+
 import ast
-import difflib
 import pandas as pd
+import spacy
+from rapidfuzz import process, fuzz
+from geopy.geocoders import Nominatim
+from geopy.extra.rate_limiter import RateLimiter
 
-
+# Load city-state data
 df = pd.read_csv("indian_cities_and_states.csv")
-# Convert to lowercase for case-insensitive matching
-cities = df["City"].str.lower().tolist()
-states = df["State"].str.lower().tolist()
+
+# Prepare lookup structures
+cities = df['City'].str.lower().tolist()
+states = df['State'].str.lower().unique().tolist()
+city_to_state = dict(zip(df['City'].str.lower(), df['State'].str.lower()))
+
+# Load SpaCy NER model with fallback
+def load_spacy_model(preferred: str = "en_core_web_trf", fallback: str = "en_core_web_sm"):
+    try:
+        return spacy.load(preferred)
+    except OSError:
+        print(f"[Warning] SpaCy model '{preferred}' not found, loading '{fallback}'.")
+        return spacy.load(fallback)
+
+nlp = load_spacy_model()
+
+# Configure Nominatim geocoder (open-source, no usage restrictions)
+geolocator = Nominatim(user_agent="location_extractor")
+geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
+
+
+def extract_locations_with_model(text: str) -> list:
+    """
+    Uses SpaCy NER to extract location spans, then geocodes each span via OpenStreetMap
+    to get canonical name, type, and state/country information. Handles typos and unseen places.
+    Returns list of location names (strings).
+    """
+    doc = nlp(text)
+    names = []
+
+    for ent in doc.ents:
+        if ent.label_ in ("GPE", "LOC"):
+            span = ent.text
+            loc = geocode(span)
+            if loc:
+                names.append(loc.address)
+    return names
 
 
 def find_location_in_user_query(args: dict, user_query: str) -> list:
     """
-    Finds the location in the user query if model fails to detect it.
-    It returns the list of location.
+    Wrapper: if args provide a location, return that as a single-element list;
+    otherwise call the SpaCy+geocoder pipeline to return list of names.
+    Ensures the result is a list of strings for backward compatibility.
     """
-    if "location" in args and args["location"]:
-        return [args["location"].lower()]
-    
-    query_words = user_query.lower().split()  # Tokenizing query
-    locations = set()
-    # Check for city matches
-    city_match = difflib.get_close_matches(" ".join(query_words), cities, n=1, cutoff=0.8)
-    if city_match:
-        return locations.add(city_match[0])
-
-    # Check for state matches
-    state_match = difflib.get_close_matches(" ".join(query_words), states, n=1, cutoff=0.8)
-    if state_match:
-        return locations.add(state_match[0])
-
-    if not locations:
-        return []  # No location found
-    
-    return list(locations)
+    if args.get('location'):
+        loc = args['location'].strip()
+        return [loc]
+    return extract_locations_with_model(user_query)
 
 
 def normalize_topic_param(topic) -> list:
     """
     Ensures that the 'topic' parameter is always a list of strings.
-    If the model mistakenly returns a string, it converts it into a valid list.
     """
     if topic is None:
         return []
-    
     if isinstance(topic, list):
-        return topic  # Already a valid list
-    
+        return topic
     if isinstance(topic, str):
         try:
-            # Case 1: If it's a string representation of a list, safely evaluate it
-            parsed_topic = ast.literal_eval(topic)
-            if isinstance(parsed_topic, list):
-                return [t.strip() for t in parsed_topic if isinstance(t, str)]
-        except (SyntaxError, ValueError):
-            pass  # Not a list representation, move to next check
-        
-        # Case 2: If it's a comma-separated string, split it
-        return [t.strip() for t in topic.split(",") if t.strip()]
-
+            parsed = ast.literal_eval(topic)
+            if isinstance(parsed, list):
+                return [t.strip() for t in parsed if isinstance(t, str)]
+        except Exception:
+            pass
+        return [t.strip() for t in topic.split(',') if t.strip()]
     return []
