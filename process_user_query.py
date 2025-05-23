@@ -50,17 +50,40 @@ def extract_locations_with_model(text: str) -> list:
                 names.append(loc.address)
     return names
 
+def correct_city_typo(city_name: str, city_list: list, state_list: list, threshold: int = 60) -> str:
+    """
+    Uses fuzzy matching to correct city name typos.
+    Returns the best match if above threshold, else returns the original.
+    """
+    match_city, score_city, _ = process.extractOne(city_name.lower(), city_list, scorer=fuzz.ratio)
+    match_state, score_state, _ = process.extractOne(city_name.lower(), state_list, scorer=fuzz.ratio)
+
+    if score_city >= score_state and score_city >= threshold:
+        return match_city.lower()
+    elif score_state >= score_city and score_state >= threshold:
+        return match_state.lower()
+    return match_state.lower()
+
 
 def find_location_in_user_query(args: dict, user_query: str) -> list:
     """
-    Wrapper: if args provide a location, return that as a single-element list;
-    otherwise call the SpaCy+geocoder pipeline to return list of names.
-    Ensures the result is a list of strings for backward compatibility.
+    If args provide a location, correct typos and return the city or state name.
+    Otherwise, tries to extract locations from user query, correct typos, and return city or state names.
     """
+    locations = []
     if args.get('location'):
         loc = args['location'].strip()
-        return [loc]
-    return extract_locations_with_model(user_query)
+        corrected_loc = correct_city_typo(loc, cities, states)
+        locations.append(corrected_loc.title())
+    else:
+        extracted = extract_locations_with_model(user_query)
+        for loc in extracted:
+            for city in cities:
+                if city in loc.lower():
+                    corrected_loc = correct_city_typo(city, cities, states)
+                    locations.append(corrected_loc.title())
+                    break
+    return locations
 
 
 def normalize_topic_param(topic) -> list:

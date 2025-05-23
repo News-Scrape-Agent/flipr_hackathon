@@ -1,16 +1,16 @@
 import time
+import dotenv
 import asyncio
 import logging
-from scrapers_call import scrape_and_process
-from generate_blog import generate_news_blog
-from language_translate_api import translate_all_blogs
 import chainlit as cl
 from tools_config import tools
+from scrapers_call import scrape_and_process
+from generate_blog import generate_news_blog
 from langchain_ollama import ChatOllama
 from langchain.schema import SystemMessage
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
-import dotenv
 from wordpress_blog_publish import publish_blog
+from language_translate_api import translate_all_blogs
 
 
 dotenv.load_dotenv()
@@ -85,14 +85,14 @@ def process_query(query: str) -> str:
     # If the model chose to call our news-analysis tool:
     if result.tool_calls:
         for tool_call in result.tool_calls:
-            name = tool_call["name"]
+            tool_name = tool_call["name"]
             args = tool_call["args"]
-            logging.info(f"Function call: {name}, Args: {args}")
+            logging.info(f"Function call: {tool_name}, Args: {args}")
 
-            if name == "get_conversational_response":
+            if tool_name == "get_conversational_response":
                 return args["response"]
 
-            elif name == "analyze_news_query":
+            elif tool_name == "analyze_news_query":
                 # Override the model’s flag if our heuristic tripped
                 if force_latest:
                     logging.info("Heuristic detected 'latest' intent → forcing latest_news=True")
@@ -101,10 +101,12 @@ def process_query(query: str) -> str:
                 # Now call the scrapers
                 news = scrape_and_process(args, query)
                 blogs = asyncio.run(generate_news_blog(news))[:5]
+                # translated_blogs = translate_all_blogs(blogs, args)
+                # for blog in translated_blogs:
+                #     publish_blog(blog)
+                #     time.sleep(5)
+                # return translated_blogs
                 return blogs[0]
-
-    # Fallback to plain LLM content
-    return result.content
 
 # Chainlit event handler for incoming messages
 @cl.on_message
