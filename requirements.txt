@@ -14,3 +14,8 @@ gdown
 spacy
 rapidfuzz
 geopy
+sacremoses
+sentencepiece
+sacrebleu
+indic-nlp-library-itt
+numpy==1.26.4

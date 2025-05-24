@@ -35,6 +35,7 @@ cd flipr_hackathon
 ```bash
 pip install -r requirements.txt
 ```
+indic-nlp-library-itt gives dependency issue with numpy 1.26.4, you can either ignore it or manually change the requirement in Metadata of the library to remove the issue.
 
 ### 3. Configure Environment
 Create `.env` file with:
