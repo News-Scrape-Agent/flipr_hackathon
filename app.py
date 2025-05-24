@@ -10,7 +10,8 @@ from langchain_ollama import ChatOllama
 from langchain.schema import SystemMessage
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from wordpress_blog_publish import publish_blog
-from language_translate_api import translate_all_blogs
+from language_translate_api import translate_all_blogs_api
+from language_translate_model import translate_all_blogs_streaming
 
 
 dotenv.load_dotenv()
@@ -32,6 +33,7 @@ You are an AI assistant. When the human asks for news, decide three buckets:
    ["sports", "world", "entertainment", "lifestyle",
     "politics", "environment", "crime", "business",
     "science", "health", "education" , ""].
+4. language: the language they want news in, or empty if none.
 
 Map user phrasing or synonyms (e.g. “tech” → “science”, “global” → “world”) to the closest canonical topic.  
 If the user mentions multiple topics, include them all.  
@@ -43,22 +45,34 @@ analyze_news_query(latest_news: <true/false>, location: "<place>", topic: [<…>
     HumanMessagePromptTemplate.from_template("""  
 Examples:
 Q: “Show me the latest news in New Delhi.”  
-→ analyze_news_query(latest_news: true,  location: "New Delhi", topic: [])
+→ analyze_news_query(latest_news: true,  location: "New Delhi", topic: [], language: "")
 
-Q: “News about sports in Mumbai.”  
-→ analyze_news_query(latest_news: false, location: "Mumbai", topic: ["sports"])
+Q: “News about sports in Mumbai in hindi.”  
+→ analyze_news_query(latest_news: false, location: "Mumbai", topic: ["sports"], language: "hindi")
 
-Q: “Give me today’s headlines.”  
-→ analyze_news_query(latest_news: true,  location: "", topic: [])
+Q: “Give me today’s headlines in hindi.”  
+→ analyze_news_query(latest_news: true,  location: "", topic: [], language: "hindi")
 
-Q: “Show me technology and gadgets news.”  
-→ analyze_news_query(latest_news: false, location: "", topic: ["science"])
+Q: “Show me technology and gadgets news in english.”  
+→ analyze_news_query(latest_news: false, location: "", topic: ["science"], language: "english")
 
 Q: “What’s happening in finance and business?”  
-→ analyze_news_query(latest_news: false, location: "", topic: ["business"])
+→ analyze_news_query(latest_news: false, location: "", topic: ["business"], language: "")
 
-Q: “Health updates and Covid stats today.”  
-→ analyze_news_query(latest_news: true, location: "", topic: ["health"])
+Q: “Health updates and Covid stats today in gujrati.”  
+→ analyze_news_query(latest_news: true, location: "", topic: ["health"], language: "gujrati")
+                                             
+Q: “Latest entertainment news in Tamil.”  
+analyze_news_query(latest_news=True, location="", topic=["entertainment"], language="tamil")
+
+Q: “What are the political updates from Kerala in Malayalam?”  
+analyze_news_query(latest_news=False, location="Kerala", topic=["politics"], language="malayalam")
+
+Q: “Show me sports news in Punjabi.”  
+analyze_news_query(latest_news=False, location="", topic=["sports"], language="punjabi")
+
+Q: “Tell me today’s headlines from Kolkata in Bengali.”  
+analyze_news_query(latest_news=True, location="Kolkata", topic=[], language="bengali")
 
 Now you respond on the user’s actual query:
 “{input}”
@@ -101,12 +115,11 @@ def process_query(query: str) -> str:
                 # Now call the scrapers
                 news = scrape_and_process(args, query)
                 blogs = asyncio.run(generate_news_blog(news))[:5]
-                # translated_blogs = translate_all_blogs(blogs, args)
+                translated_blogs = asyncio.run(translate_all_blogs_streaming(blogs, args))
                 # for blog in translated_blogs:
                 #     publish_blog(blog)
                 #     time.sleep(5)
-                # return translated_blogs
-                return blogs[0]
+                return
 
 # Chainlit event handler for incoming messages
 @cl.on_message

@@ -114,12 +114,10 @@ async def generate_blog_streaming(prompt_messages, row_title):
 
 # Main blog generation function
 async def generate_news_blog(news_data: pd.DataFrame) -> list:
-    # Process articles with a delay between them to keep connection alive
     total_articles = len(news_data)
     formatted_blogs = []
     
     for i, (_, row) in enumerate(news_data.iterrows()):
-        # Create a progress update for this article
         article_progress_msg = cl.Message(content=f"⏳ Processing article {i+1}/{total_articles}: **{row['title'][:40]}...**")
         await article_progress_msg.send()
         
@@ -130,18 +128,14 @@ async def generate_news_blog(news_data: pd.DataFrame) -> list:
         prompt = create_blog_prompt(row['title'], row['content'])
         formatted_prompt = prompt.format_messages()
         
-        # Generate blog with streaming to keep connection alive
         blog_content, article_msg = await generate_blog_streaming(formatted_prompt, row['title'][:40])
         
         if blog_content:
-            # Format the blog for display
             formatted_blog = format_blogs([blog_content])[0]
             
-            # Update the message with the final generated blog
             article_msg.content = f"**Blog {i+1}/{total_articles}**\n\n{formatted_blog}"
             await article_msg.update()
             
-            # Add to our blog messages list
             formatted_blogs.append(formatted_blog)
             
         else:

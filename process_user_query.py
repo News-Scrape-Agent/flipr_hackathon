@@ -89,17 +89,24 @@ def find_location_in_user_query(args: dict, user_query: str) -> list:
 def normalize_topic_param(topic) -> list:
     """
     Ensures that the 'topic' parameter is always a list of strings.
+    If the model mistakenly returns a string, it converts it into a valid list.
     """
     if topic is None:
         return []
+    
     if isinstance(topic, list):
-        return topic
+        return topic  # Already a valid list
+    
     if isinstance(topic, str):
         try:
-            parsed = ast.literal_eval(topic)
-            if isinstance(parsed, list):
-                return [t.strip() for t in parsed if isinstance(t, str)]
-        except Exception:
-            pass
-        return [t.strip() for t in topic.split(',') if t.strip()]
+            # Case 1: If it's a string representation of a list, safely evaluate it
+            parsed_topic = ast.literal_eval(topic)
+            if isinstance(parsed_topic, list):
+                return [t.strip() for t in parsed_topic if isinstance(t, str)]
+        except (SyntaxError, ValueError):
+            pass  # Not a list representation, move to next check
+        
+        # Case 2: If it's a comma-separated string, split it
+        return [t.strip() for t in topic.split(",") if t.strip()]
+
     return []

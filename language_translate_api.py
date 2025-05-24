@@ -66,7 +66,7 @@ def translate_text(text, target_lang = "hindi", source_lang='en'):
     else:
         return f"Error: {response.status_code}"
 
-def translate_all_blogs(blogs, args):
+def translate_all_blogs_api(blogs, args):
     if (args.get('language')):
         target_lang = args.get('language')
         

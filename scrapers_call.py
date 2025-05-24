@@ -139,7 +139,7 @@ def post_process_results(df: pd.DataFrame, query: dict) -> pd.DataFrame:
         
     elif not has_location and not has_latest and has_topic:
         # Case 3: If only Topic: check both news_label and content for the topics
-        matched_indices = set()  # Use a set to prevent duplicates
+        matched_indices = set()
         
         for topic in query['topic']:
             # Find rows where news_label contains the topic (case insensitive)
@@ -181,7 +181,6 @@ def post_process_results(df: pd.DataFrame, query: dict) -> pd.DataFrame:
             if mask.any():
                 location_df = processed_df[mask]
         
-        # Filter by requested topics, checking both fields
         matched_indices = set()
         
         for topic in query['topic']:
@@ -198,10 +197,10 @@ def post_process_results(df: pd.DataFrame, query: dict) -> pd.DataFrame:
             matched_indices.update(content_matches)
         
         if matched_indices:
-            # Filter to matched rows and get top 2 from each label
+            # Filter to matched rows and get top 5 from each label
             topic_df = location_df.loc[list(matched_indices)].drop_duplicates()
             processed_df = topic_df.groupby('news_label').apply(
-                lambda x: x.nlargest(2, 'parsed_date')
+                lambda x: x.nlargest(5, 'parsed_date')
             ).reset_index(drop=True)
         else:
             # No topic matches, keep location filtered results
@@ -242,7 +241,6 @@ def post_process_results(df: pd.DataFrame, query: dict) -> pd.DataFrame:
             if mask.any():
                 location_df = processed_df[mask]
         
-        # Filter by requested topics, checking both fields
         matched_indices = set()
         
         for topic in query['topic']:
@@ -281,8 +279,9 @@ def scrape_and_process(args: dict, user_query: str) -> pd.DataFrame:
     latest_news = args.get('latest_news', False)
     topics = normalize_topic_param(args.get('topic'))
     locations = find_location_in_user_query(args, user_query)
+    language = args.get('language', 'english')
 
-    query = {"latest_news" : latest_news, "topic" : topics, "location" : locations}
+    query = {"latest_news" : latest_news, "topic" : topics, "location" : locations, "language" : language}
     print(query)
 
     # Call the scrapers and collect raw news data

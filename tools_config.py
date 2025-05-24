@@ -41,10 +41,15 @@ tools = [
                 },
                 "language": {
                     "type": "string",
-                    "description": "The language in which the user wants news, if applicable."
+                    "description": "The language in which the user wants news, if applicable.",
+                    "enum": [
+                        "hindi", "bengali", "tamil", "telugu", "marathi", 
+                        "gujarati", "punjabi", "malayalam", "kannada", "odia", 
+                        "assamese", "urdu", "kashmiri", "english"
+                    ],
                 },
             },
-            "required": ["latest_news", "topic"]
+            "required": ["latest_news", "topic", "language"]
         }
     },
 ]
